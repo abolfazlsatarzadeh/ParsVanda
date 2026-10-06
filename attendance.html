@@ -251,18 +251,90 @@ function clearAttendanceUser(){
 // ذخیره محلی برای نسخه اولیه.
 // بعداً می‌توان همین ساختار را به Supabase وصل کرد تا همه دستگاه‌ها یک اطلاعات مشترک داشته باشند.
 const STORAGE_KEY = "attendance_records_v1";
-
+const ATTENDANCE_ONLINE_FORM_NUMBER="__ATTENDANCE_RECORDS__";
+const ATTENDANCE_ONLINE_FORM_DATE="2099-12-30";
+const ATTENDANCE_SUPABASE_URL="https://dcjylaftcxtiasvhihcf.supabase.co";
+const ATTENDANCE_SUPABASE_KEY="sb_publishable_1uZ11T3MbO-NverqHK66kQ_1dsEA0DW";
+let attendanceSupabaseClient=null;
+let attendanceOnlineLoaded=false;
+let attendanceOnlineLoading=null;
 let memoryRecords={};
-function getRecords(){
+
+function loadAttendanceSupabase(){
+  if(attendanceSupabaseClient) return Promise.resolve(attendanceSupabaseClient);
+  if(window.supabase){
+    attendanceSupabaseClient=window.supabase.createClient(ATTENDANCE_SUPABASE_URL,ATTENDANCE_SUPABASE_KEY);
+    return Promise.resolve(attendanceSupabaseClient);
+  }
+  return new Promise((resolve,reject)=>{
+    const script=document.createElement("script");
+    script.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    script.async=true;
+    script.onload=()=>{
+      try{
+        attendanceSupabaseClient=window.supabase.createClient(ATTENDANCE_SUPABASE_URL,ATTENDANCE_SUPABASE_KEY);
+        resolve(attendanceSupabaseClient);
+      }catch(e){ reject(e); }
+    };
+    script.onerror=()=>reject(new Error("خطا در بارگذاری اتصال آنلاین"));
+    document.head.appendChild(script);
+  });
+}
+function getLocalAttendanceRecords(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
-    if(raw){ memoryRecords=JSON.parse(raw)||{}; }
-  }catch(e){ /* در iframe با origin محدود، از حافظه موقت استفاده می‌شود */ }
-  return memoryRecords;
+    if(raw) return JSON.parse(raw)||{};
+  }catch(e){}
+  return {};
+}
+function getRecords(){ return memoryRecords; }
+
+async function loadAttendanceOnline(){
+  if(attendanceOnlineLoaded) return memoryRecords;
+  if(attendanceOnlineLoading) return attendanceOnlineLoading;
+  attendanceOnlineLoading=(async()=>{
+    try{
+      const client=await loadAttendanceSupabase();
+      const {data,error}=await client.from("ccm_forms")
+        .select("data")
+        .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER)
+        .eq("form_date",ATTENDANCE_ONLINE_FORM_DATE)
+        .maybeSingle();
+      if(error) throw error;
+      const remote=data && data.data && data.data.records;
+      if(remote && typeof remote==="object" && !Array.isArray(remote)){
+        memoryRecords=remote;
+      }else{
+        memoryRecords=getLocalAttendanceRecords();
+        if(Object.keys(memoryRecords).length) await saveAttendanceOnline(memoryRecords);
+      }
+      attendanceOnlineLoaded=true;
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords));}catch(e){}
+    }catch(e){
+      console.error("Attendance online load error:",e);
+      memoryRecords=getLocalAttendanceRecords();
+      attendanceOnlineLoaded=true;
+    }finally{
+      attendanceOnlineLoading=null;
+    }
+    return memoryRecords;
+  })();
+  return attendanceOnlineLoading;
+}
+async function saveAttendanceOnline(records){
+  const client=await loadAttendanceSupabase();
+  const {error}=await client.from("ccm_forms").upsert({
+    form_number:ATTENDANCE_ONLINE_FORM_NUMBER,
+    form_date:ATTENDANCE_ONLINE_FORM_DATE,
+    data:{module:"attendance_records",records:records},
+    updated_at:new Date().toISOString()
+  },{onConflict:"form_number,form_date"});
+  if(error) throw error;
 }
 function setRecords(data){
   memoryRecords=data||{};
-  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){ /* fallback حافظه موقت */ }
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){}
+  saveAttendanceOnline(memoryRecords).catch(e=>console.error("Attendance online save error:",e));
 }
 function getEmployeeByPassword(p){return employees.find(x=>x[1]===p)}
 function pad(n){return String(n).padStart(2,"0")}
@@ -334,8 +406,9 @@ function msg(id,text){
   const el=document.getElementById(id);el.textContent=text;el.classList.remove("hidden");
 }
 
-function login(){
+async function login(){
   const p=document.getElementById("password").value.trim();
+  try{ await loadAttendanceOnline(); }catch(e){ console.error("Attendance online login load error:",e); }
   if(p===MANAGER_PASSWORD){
     hide("loginPage");hide("adminPage");show("managerPage");initManager();return;
   }
@@ -605,9 +678,19 @@ document.getElementById("filterPerson").onchange=renderAll;
 document.getElementById("fromDate").onchange=renderAll;
 document.getElementById("toDate").onchange=renderAll;
 
-(function(){
+loadAttendanceOnline().then(()=>{
   const name=getAttendanceUser();
-  if(name&&employees.some(e=>e[0]===name)){hide("loginPage");show("employeePage");loadEmployee(name)}
+  if(name && typeof renderEmployee==="function") renderEmployee(name);
+  if(document.getElementById("dailyAttendanceBody") && typeof renderDailyAttendance==="function") renderDailyAttendance();
+  if(document.getElementById("allHistory") && typeof renderAll==="function") renderAll();
+  if(document.getElementById("managerHistory") && typeof renderManager==="function") renderManager();
+});
+
+(function(){
+  loadAttendanceOnline().then(()=>{
+    const name=getAttendanceUser();
+    if(name&&employees.some(e=>e[0]===name)){hide("loginPage");show("employeePage");loadEmployee(name)}
+  });
 })();
 
 /* =========================================================

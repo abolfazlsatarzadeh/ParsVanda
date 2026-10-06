@@ -923,6 +923,7 @@ function login(){
     if(searchButton) searchButton.style.display = isManagement() ? "block" : "none";
 
     renderRoles();
+    loadSafetyRequestsOnline().then(()=>{ if(currentAccess) renderRoles(); });
     setTodayDate();
 
     if(account.role !== "manager" && account.role !== "safety-officer"){
@@ -1238,18 +1239,85 @@ function createChecklist(role,shift){
    CREATE ROLE CARDS
 ========================================================= */
 
-function getSafetyRequests(){
+let safetyRequestsMemory=[];
+let safetyRequestsOnlineLoaded=false;
+let safetyRequestsOnlineLoading=null;
+const HSE_ONLINE_FORM_NUMBER="__PMNET_HSE_REQUESTS__";
+const HSE_ONLINE_FORM_DATE="2099-12-31";
+
+function getLocalSafetyRequests(){
     try{
         const raw=localStorage.getItem("pmnet_safety_requests");
-        if(raw){ const list=JSON.parse(raw); return Array.isArray(list)?list:[]; }
+        if(raw){
+            const list=JSON.parse(raw);
+            if(Array.isArray(list)) return list;
+        }
     }catch(e){}
     try{
         const oldText=localStorage.getItem("pmnet_hse_request_text")||"";
-        if(oldText){ return [{id:Date.now(),text:oldText,status:localStorage.getItem("pmnet_hse_permit_status")||"pending",response:localStorage.getItem("pmnet_hse_supervisor_response")||"",createdAt:new Date().toLocaleString("fa-IR"),dateKey:new Date().toLocaleDateString("fa-IR")}]; }
+        if(oldText){
+            return [{id:Date.now(),text:oldText,status:localStorage.getItem("pmnet_hse_permit_status")||"pending",response:localStorage.getItem("pmnet_hse_supervisor_response")||"",createdAt:new Date().toLocaleString("fa-IR"),dateKey:new Date().toLocaleDateString("fa-IR")}];
+        }
     }catch(e){}
     return [];
 }
-function saveSafetyRequests(list){ try{localStorage.setItem("pmnet_safety_requests",JSON.stringify(list));}catch(e){} }
+function getSafetyRequests(){
+    return Array.isArray(safetyRequestsMemory)?safetyRequestsMemory:[];
+}
+async function loadSafetyRequestsOnline(){
+    if(safetyRequestsOnlineLoaded) return getSafetyRequests();
+    if(safetyRequestsOnlineLoading) return safetyRequestsOnlineLoading;
+    safetyRequestsOnlineLoading=(async()=>{
+        try{
+            if(!supabaseClient) await loadSupabase();
+            const {data,error}=await supabaseClient
+                .from("ccm_forms")
+                .select("data")
+                .eq("form_number",HSE_ONLINE_FORM_NUMBER)
+                .eq("form_date",HSE_ONLINE_FORM_DATE)
+                .maybeSingle();
+            if(error) throw error;
+            const remoteList=data && data.data && Array.isArray(data.data.requests) ? data.data.requests : null;
+            if(remoteList){
+                safetyRequestsMemory=remoteList;
+            }else{
+                const localList=getLocalSafetyRequests();
+                safetyRequestsMemory=localList;
+                if(localList.length){
+                    await saveSafetyRequestsOnline(localList);
+                }
+            }
+            safetyRequestsOnlineLoaded=true;
+            try{localStorage.setItem("pmnet_safety_requests",JSON.stringify(safetyRequestsMemory));}catch(e){}
+        }catch(e){
+            console.error("HSE online load error:",e);
+            safetyRequestsMemory=getLocalSafetyRequests();
+            safetyRequestsOnlineLoaded=true;
+        }finally{
+            safetyRequestsOnlineLoading=null;
+        }
+        return getSafetyRequests();
+    })();
+    return safetyRequestsOnlineLoading;
+}
+async function saveSafetyRequestsOnline(list){
+    const safeList=Array.isArray(list)?list:[];
+    if(!supabaseClient) await loadSupabase();
+    const {error}=await supabaseClient
+        .from("ccm_forms")
+        .upsert({
+            form_number:HSE_ONLINE_FORM_NUMBER,
+            form_date:HSE_ONLINE_FORM_DATE,
+            data:{module:"pmnet_hse_requests",requests:safeList},
+            updated_at:new Date().toISOString()
+        },{onConflict:"form_number,form_date"});
+    if(error) throw error;
+}
+function saveSafetyRequests(list){
+    safetyRequestsMemory=Array.isArray(list)?list:[];
+    try{localStorage.setItem("pmnet_safety_requests",JSON.stringify(safetyRequestsMemory));}catch(e){}
+    saveSafetyRequestsOnline(safetyRequestsMemory).catch(e=>console.error("HSE online save error:",e));
+}
 function safetyStatusText(status){ return status==="approved"?"✓ تأیید شد":status==="rejected"?"✕ عدم تأیید":"● در انتظار بررسی"; }
 function safetyStatusClass(status){ return status==="approved"?"approved":status==="rejected"?"rejected":"pending"; }
 function toggleTechnicalNewRequest(){
