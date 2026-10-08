@@ -696,6 +696,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .checklist-group>summary::-webkit-details-marker{display:none}
 .checklist-group>summary:after{content:'＋';font-size:18px}
 .checklist-group[open]>summary:after{content:'−'}
+.checklist-group>summary .group-status{margin-right:auto;font-size:12px;font-weight:700;color:#9a6700;background:#fff7df;border-radius:999px;padding:3px 8px}
+.checklist-group>summary.group-complete .group-status{color:#166534;background:#dcfce7}
+.checklist-group>summary.group-complete{background:#ecfdf3}
 .group-count{font-size:12px;font-weight:500;color:#526579;white-space:nowrap}
 .checklist-group .table-wrapper{margin:0;padding:0 8px 8px}
 .description-box textarea{width:100%;min-height:85px;box-sizing:border-box}
@@ -1251,8 +1254,8 @@ function createChecklist(role,shift){
     let itemIndex = 0;
     checklistGroups.forEach((group, groupIndex) => {
         html += `
-          <details class="checklist-group" ${groupIndex === 0 ? "open" : ""}>
-            <summary>${group.title} <span class="group-count">${group.items.length} مورد</span></summary>
+          <details class="checklist-group">
+            <summary data-group-summary="${role.id}_${shift}_${groupIndex}"><span class="group-title">${group.title}</span> <span class="group-count">${group.items.length} مورد</span><span class="group-status" data-group-status="${role.id}_${shift}_${groupIndex}">⏳ تکمیل نشده</span></summary>
             <div class="table-wrapper">
               <table class="checklist-table">
                 <thead><tr><th>ردیف</th><th>مورد بررسی</th><th>وضعیت</th><th>توضیحات</th></tr></thead>
@@ -1267,8 +1270,8 @@ function createChecklist(role,shift){
                 <td>${item}</td>
                 <td class="status-cell">
                   <div class="status-options">
-                    <label class="status-option"><input type="radio" name="${radioName}" value="OK" data-radio="${radioName}"><span>OK</span></label>
-                    <label class="status-option"><input type="radio" name="${radioName}" value="Not OK" data-radio="${radioName}"><span>Not OK</span></label>
+                    <label class="status-option"><input type="radio" name="${radioName}" value="OK" data-radio="${radioName}" onchange="updateChecklistGroupStatus('${role.id}','${shift}',${groupIndex})"><span>OK</span></label>
+                    <label class="status-option"><input type="radio" name="${radioName}" value="Not OK" data-radio="${radioName}" onchange="updateChecklistGroupStatus('${role.id}','${shift}',${groupIndex})"><span>Not OK</span></label>
                   </div>
                 </td>
                 <td>
@@ -1886,6 +1889,7 @@ async function checkTodayRoleSaved(){
         window._ccmSavedShifts = savedShifts;
         window._ccmSavedGroups = formData && formData._ccmMeta ? (formData._ccmMeta.savedGroups || {}) : {};
         lockSavedChecklistGroups();
+        refreshAllChecklistGroupStatus();
 
         // سازگاری با نسخه قبلی: اگر نقش قبلاً کامل ثبت شده باشد، هر دو شیفت قفل شوند.
         if(savedRoles[currentAccess.role]){
@@ -1964,12 +1968,45 @@ async function saveChecklistGroup(roleId,shift,groupIndex){
     }catch(e){ console.error(e); alert("خطا در ذخیره کشو:\n\n"+e.message); }
     finally{ hideLoading(); }
 }
+function updateChecklistGroupStatus(roleId,shift,groupIndex){
+    const indexes=getGroupItemIndexes(roleId,shift,groupIndex);
+    if(!indexes.length) return false;
+    const complete=indexes.every(i=>[...document.querySelectorAll(`input[data-radio="${roleId}_${shift}_item_${i}"]`)].some(x=>x.checked));
+    const summary=document.querySelector(`[data-group-summary="${roleId}_${shift}_${groupIndex}"]`);
+    const status=document.querySelector(`[data-group-status="${roleId}_${shift}_${groupIndex}"]`);
+    if(summary) summary.classList.toggle('group-complete',complete);
+    if(status) status.textContent=complete?'✅ تکمیل شده':'⏳ تکمیل نشده';
+    return complete;
+}
+function refreshAllChecklistGroupStatus(){
+    if(!currentAccess) return;
+    const targetRoles = currentAccess.role === "manager" || currentAccess.role === "safety-officer" ? roles : roles.filter(r=>r.id===currentAccess.role);
+    const saved = window._ccmSavedGroups || {};
+    targetRoles.forEach(role=>{
+        if(!role.groups) return;
+        ['day','night'].forEach(shift=>role.groups.forEach((_,gi)=>{
+            const completeByInputs = updateChecklistGroupStatus(role.id,shift,gi);
+            const key = `${role.id}_${shift}_${gi}`;
+            if(saved[key]){
+                const summary=document.querySelector(`[data-group-summary="${role.id}_${shift}_${gi}"]`);
+                const status=document.querySelector(`[data-group-status="${role.id}_${shift}_${gi}"]`);
+                if(summary) summary.classList.add('group-complete');
+                if(status) status.textContent='✅ ثبت و تکمیل شده';
+            }
+        }));
+    });
+}
+
 function lockChecklistGroup(roleId,shift,groupIndex){
     const role=roles.find(r=>r.id===roleId); if(!role||!role.groups) return;
     const indexes=getGroupItemIndexes(roleId,shift,groupIndex);
     indexes.forEach(i=>{
         document.querySelectorAll(`input[data-radio="${roleId}_${shift}_item_${i}"], [data-field="${roleId}_${shift}_item_${i}_description"]`).forEach(el=>el.disabled=true);
     });
+    const summary=document.querySelector(`[data-group-summary="${roleId}_${shift}_${groupIndex}"]`);
+    const status=document.querySelector(`[data-group-status="${roleId}_${shift}_${groupIndex}"]`);
+    if(summary) summary.classList.add('group-complete');
+    if(status) status.textContent='✅ ثبت و تکمیل شده';
     const b=document.querySelector(`[data-group-save="${roleId}_${shift}_${groupIndex}"]`);
     if(b){b.disabled=true;b.innerHTML="✅ این کشو ثبت شده";}
 }
@@ -2183,6 +2220,11 @@ async function loadForm(
         applyFormData(
             data.data
         );
+        window._ccmSavedGroups = data.data && data.data._ccmMeta ? (data.data._ccmMeta.savedGroups || {}) : {};
+        refreshAllChecklistGroupStatus();
+        if(currentAccess && currentAccess.role !== "manager" && currentAccess.role !== "safety-officer") {
+            lockSavedChecklistGroups();
+        }
 
 
         showMessage(

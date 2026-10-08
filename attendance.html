@@ -781,7 +781,7 @@ function renderManagerNoticeHistory(){
   if(!box)return;
   const notices=[...getCommitteeNotices()].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
   if(!notices.length){box.innerHTML='<div class="muted">هنوز اطلاعیه‌ای ارسال نشده است.</div>';return;}
-  box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>گیرنده</th><th>متن اطلاعیه</th></tr></thead><tbody>${notices.map(n=>`<tr><td>${escapeHtml(n.createdAtDisplay||n.createdAt)}</td><td>${n.target==="all"?"📢 همه پرسنل":"👤 "+escapeHtml(n.target)}</td><td style="text-align:right;white-space:pre-wrap">${escapeHtml(n.text)}</td></tr>`).join("")}</tbody></table></div>`;
+  box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>گیرنده</th><th>متن اطلاعیه</th><th>عملیات</th></tr></thead><tbody>${notices.map(n=>`<tr><td>${escapeHtml(n.createdAtDisplay||n.createdAt)}</td><td>${n.target==="all"?"📢 همه پرسنل":"👤 "+escapeHtml(n.target)}</td><td style="text-align:right;white-space:pre-wrap">${escapeHtml(n.text)}</td><td><button type="button" class="danger" style="padding:6px 10px;width:auto" onclick="deleteManagerNotice(${Number(n.id)})">🗑 حذف</button></td></tr>`).join("")}</tbody></table></div>`;
 }
 
 async function deleteManagerNotice(id){
@@ -937,11 +937,23 @@ function renderManager(){
       (dayGroups[dayKey] ||= []).push(r);
     });
     const dayKeys=Object.keys(dayGroups).sort((a,b)=>b.localeCompare(a));
+    const monthCount=groups[key].length;
+    const monthDeleteKey=encodeURIComponent(key);
     return `<details class="month-section">
-      <summary>📅 ${months[Number(jm)]} ${jy} <span class="small">${groups[key].length} رکورد</span></summary>
+      <summary style="list-style:none;cursor:pointer">
+        <span>📅 ${months[Number(jm)]} ${jy} <span class="small">${monthCount} رکورد</span></span>
+        <button type="button" class="danger" style="width:auto;padding:6px 10px;margin-right:8px" onclick="event.preventDefault();event.stopPropagation();deleteManagerMonth(decodeURIComponent('${monthDeleteKey}'))">🗑 حذف ماه</button>
+      </summary>
       <div class="month-content" style="padding:10px 12px">
-        ${dayKeys.map(dayKey=>`<details class="day-section" style="margin:8px 0;border:1px solid #e5ebf2;border-radius:12px;overflow:hidden">
-          <summary style="list-style:none;cursor:pointer;padding:11px 13px;background:#fafcff;font-weight:bold;display:flex;align-items:center;justify-content:space-between">🗓️ ${jy}/${jm}/${dayKey} — ${dayName(dayGroups[dayKey][0].date)} <span class="small">${dayGroups[dayKey].length} رکورد</span></summary>
+        ${dayKeys.map(dayKey=>{
+          const dayCount=dayGroups[dayKey].length;
+          const dayDate=dayGroups[dayKey][0].date;
+          const dayDeleteKey=encodeURIComponent(dayDate);
+          return `<details class="day-section" style="margin:8px 0;border:1px solid #e5ebf2;border-radius:12px;overflow:hidden">
+          <summary style="list-style:none;cursor:pointer;padding:11px 13px;background:#fafcff;font-weight:bold;display:flex;align-items:center;justify-content:space-between">
+            <span>🗓️ ${jy}/${jm}/${dayKey} — ${dayName(dayDate)} <span class="small">${dayCount} رکورد</span></span>
+            <button type="button" class="danger" style="width:auto;padding:6px 10px" onclick="event.preventDefault();event.stopPropagation();deleteManagerDay(decodeURIComponent('${dayDeleteKey}'))">🗑 حذف روز</button>
+          </summary>
           <div class="table-wrap" style="padding:8px">
             <table>
               <thead><tr><th>پرسنل</th><th>تاریخ</th><th>روز</th><th>ورود</th><th>خروج</th><th>عملیات</th></tr></thead>
@@ -951,14 +963,62 @@ function renderManager(){
               }).join("")}</tbody>
             </table>
           </div>
-        </details>`).join("")}
+        </details>`;
+        }).join("")}
       </div>
     </details>`;
   }).join("");
 }
-function deleteManagerRecord(key){
+async function deleteManagerRecord(key){
   if(!confirm("این رکورد حذف شود؟"))return;
-  const records=getRecords(); delete records[key]; setRecords(records); renderManager();
+  const records=getRecords();
+  delete records[key];
+  try{
+    await setRecords(records);
+    renderManager();
+  }catch(e){
+    console.error("Manager record delete error:",e);
+    alert("حذف رکورد انجام نشد؛ اتصال سامانه را بررسی کنید.");
+  }
+}
+
+async function deleteManagerDay(date){
+  const records=getRecords();
+  const keys=Object.keys(records).filter(key=>records[key]?.date===date);
+  if(!keys.length)return;
+  const display=displayDate(date);
+  if(!confirm(`تمام ${keys.length} رکورد روز ${display} حذف شود؟\nاین عملیات قابل بازگشت نیست.`))return;
+  keys.forEach(key=>delete records[key]);
+  try{
+    await setRecords(records);
+    renderManager();
+  }catch(e){
+    console.error("Manager day delete error:",e);
+    alert("حذف روز انجام نشد؛ اتصال سامانه را بررسی کنید.");
+  }
+}
+
+async function deleteManagerMonth(monthKey){
+  const [jy,jm]=String(monthKey).split("/");
+  const records=getRecords();
+  const keys=Object.keys(records).filter(key=>{
+    const r=records[key];
+    if(!r?.date)return false;
+    const dp=displayDate(r.date).split("/");
+    return dp[0]===jy && dp[1]===jm;
+  });
+  if(!keys.length)return;
+  const monthNames=["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+  const monthTitle=`${monthNames[Number(jm)]||"ماه"} ${jy}`;
+  if(!confirm(`تمام ${keys.length} رکورد ${monthTitle} حذف شود؟\nاین عملیات قابل بازگشت نیست.`))return;
+  keys.forEach(key=>delete records[key]);
+  try{
+    await setRecords(records);
+    renderManager();
+  }catch(e){
+    console.error("Manager month delete error:",e);
+    alert("حذف ماه انجام نشد؛ اتصال سامانه را بررسی کنید.");
+  }
 }
 
 function renderEmployeeManagement(){

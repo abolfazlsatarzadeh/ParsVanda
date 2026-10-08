@@ -1719,11 +1719,10 @@ function validateShiftBeforeSave(roleId, shift, data){
     return {ok:true};
 }
 
-function lockShift(roleId, shift){
+function lockShift(roleId, shift, forceView=false){
 
-    if(!currentAccess ||
-       currentAccess.role === "manager" ||
-       currentAccess.role === "supervisor") return;
+    if(!currentAccess) return;
+    if(!forceView && (currentAccess.role === "manager" || currentAccess.role === "supervisor")) return;
 
     document.querySelectorAll(
         `[data-field^="${roleId}_${shift}_"], input[type="radio"][data-radio^="${roleId}_${shift}_"]`
@@ -1969,22 +1968,21 @@ async function loadForm(
 
     try{
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
+        // تاریخ فرم‌ها ممکن است در نسخه‌های مختلف با / یا - ذخیره شده باشد؛
+        // ابتدا مقدار دقیق و سپس فرمت جایگزین را بررسی می‌کنیم.
+        const normalizedDate = String(formDate || "").replaceAll("-","/").trim();
+        const dateVariants = [...new Set([String(formDate || "").trim(), normalizedDate, normalizedDate.replaceAll("/","-")])].filter(Boolean);
+        let data = null, error = null;
+        for (const dv of dateVariants) {
+            const q = await supabaseClient
                 .from("ccm_forms")
                 .select("*")
-                .eq(
-                    "form_number",
-                    String(formNumber)
-                )
-                .eq(
-                    "form_date",
-                    formDate
-                )
+                .eq("form_number", String(formNumber))
+                .eq("form_date", dv)
                 .maybeSingle();
+            if (q.error) { error = q.error; break; }
+            if (q.data) { data = q.data; break; }
+        }
 
 
         if(error){
@@ -2016,6 +2014,15 @@ async function loadForm(
             data.data
         );
 
+        // نقش‌ها/شیفت‌های قبلاً ثبت‌شده را برای مدیر و ناظر نیز فقط‌خواندنی کن.
+        const savedShifts = (data.data && data.data._ccmMeta && data.data._ccmMeta.savedShifts) || {};
+        Object.keys(savedShifts).forEach(key => {
+            const parts = key.split("_");
+            if(parts.length < 2) return;
+            const shift = parts.pop();
+            const roleId = parts.join("_");
+            lockShift(roleId, shift, true);
+        });
 
         showMessage(
             "✅ فرم از پایگاه داده بارگذاری شد"
@@ -2039,6 +2046,63 @@ async function loadForm(
 
 }
 
+
+async function loadFormById(formId){
+    showLoading();
+    try{
+        if(!supabaseClient) await loadSupabase();
+        if(!supabaseClient) throw new Error("ارتباط با پایگاه داده برقرار نشد");
+
+        const idValue = String(formId || "").trim();
+        if(!idValue){
+            showMessage("شناسه فرم معتبر نیست");
+            return;
+        }
+
+        // ابتدا خود رکورد را با شناسه یکتا می‌خوانیم.
+        // limit(1) باعث می‌شود حتی در صورت وجود داده‌های قدیمی تکراری، خطای multiple rows نگیریم.
+        let result = await supabaseClient
+            .from("ccm_forms")
+            .select("*")
+            .eq("id", idValue)
+            .limit(1);
+
+        if(result.error) throw result.error;
+
+        let data = result.data && result.data.length ? result.data[0] : null;
+
+        // پشتیبان: اگر رکورد با شناسه پیدا نشد، از شماره و تاریخ فعلی فرم استفاده می‌کنیم.
+        if(!data){
+            const formNumber = String(document.getElementById("formNumber")?.value || "").trim();
+            const formDate = String(document.getElementById("formDate")?.value || "").trim();
+            if(formNumber && formDate){
+                const fallback = await supabaseClient
+                    .from("ccm_forms")
+                    .select("*")
+                    .eq("form_number", formNumber)
+                    .eq("form_date", formDate)
+                    .limit(1);
+                if(fallback.error) throw fallback.error;
+                data = fallback.data && fallback.data.length ? fallback.data[0] : null;
+            }
+        }
+
+        if(!data){
+            showMessage("فرم موردنظر پیدا نشد");
+            return;
+        }
+
+        document.getElementById("formNumber").value=String(data.form_number||"");
+        document.getElementById("formDate").value=String(data.form_date||"");
+        applyFormData(data.data || {});
+        showMessage("✅ فرم از پایگاه داده بارگذاری شد");
+    }catch(error){
+        console.error("CCM loadFormById error:", error);
+        alert("خطا در دریافت فرم:\n\n" + (error?.message || "خطای نامشخص در دریافت اطلاعات فرم"));
+    }finally{
+        hideLoading();
+    }
+}
 
 /* =========================================================
    APPLY FORM DATA
@@ -2180,6 +2244,15 @@ async function checkExistingForm(
             applyFormData(
                 data.data
             );
+
+            const savedShifts = (data.data && data.data._ccmMeta && data.data._ccmMeta.savedShifts) || {};
+            Object.keys(savedShifts).forEach(key => {
+                const parts = key.split("_");
+                if(parts.length < 2) return;
+                const shift = parts.pop();
+                const roleId = parts.join("_");
+                lockShift(roleId, shift, true);
+            });
 
             showMessage(
                 "فرم ذخیره‌شده بارگذاری شد"
@@ -2333,6 +2406,8 @@ async function clearCurrentForm(){
 
 }
 
+
+function escapeHtml(value){ return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 /* =========================================================
    SEARCH PANEL
