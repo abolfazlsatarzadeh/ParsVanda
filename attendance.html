@@ -21,7 +21,7 @@
 }
 *{box-sizing:border-box}
 body{
-  margin:0;font-family:b nazanin,Arial,sans-serif;background:#f3f6fa;color:#172033;
+  margin:0;font-family:b nazanin,b nazanin ,b nazanin;background:#f3f6fa;color:#172033;
 }
 .container{max-width:1050px;margin:0 auto;padding:20px}
 .card{
@@ -32,6 +32,7 @@ body{
 h1,h2,h3{margin-top:0}
 h1{font-size:25px}.muted{color:#687386;font-size:14px}
 .login{max-width:430px;margin:70px auto}
+textarea{font-family:inherit;font-size:inherit;line-height:1.8;resize:vertical}
 input,select,button{
   width:100%;padding:13px;border-radius:11px;border:1px solid #cfd8e3;
   font:inherit;background:#fff
@@ -67,6 +68,8 @@ th{background:#f7f9fc}
 .month-section summary:after{content:"⌄";font-size:18px;transition:transform .2s}
 .month-section[open] summary:after{transform:rotate(180deg)}
 .month-section .month-content{padding:0}
+.day-section summary::-webkit-details-marker{display:none}
+.day-section summary:after{content:"⌄";font-size:17px;transition:transform .2s}.day-section[open] summary:after{transform:rotate(180deg)}
 .month-section table{min-width:560px}
 .month-separator td{background:#eef5ff!important;color:#1769e0!important;font-weight:bold;border-top:2px solid #d9e7f7}
 
@@ -152,6 +155,12 @@ th{background:#f7f9fc}
   </div>
 
   <div class="card">
+    <h2>📢 اطلاعیه‌ها و سوابق ثبت‌شده توسط مدیر</h2>
+    <div id="myCommitteeNotices"></div>
+    <div id="myCommitteeHistory"></div>
+  </div>
+
+  <div class="card">
     <h2>📋 سوابق حضور و غیاب من</h2>
     <div id="myHistory"></div>
   </div>
@@ -191,6 +200,34 @@ th{background:#f7f9fc}
     </div>
     <div id="managerHistory" style="margin-top:15px"></div>
   </div>
+<div class="card">
+  <h2>🏆 مدیریت پاداش، اخطار و جریمه پرسنل</h2>
+  <div class="admin-toolbar">
+    <div><label>پرسنل</label><select id="managerActionPerson"></select></div>
+    <div><label>نوع مورد</label><select id="managerActionType"><option value="reward">🏆 پاداش</option><option value="warning">🟠 اخطار</option><option value="fine">🔴 جریمه</option></select></div>
+    <div><label id="managerActionAmountLabel">مبلغ پاداش (ریال)</label><input id="managerActionAmount" type="number" min="0" inputmode="numeric" placeholder="مبلغ به ریال"></div>
+  </div>
+  <div style="margin-top:12px"><label>شرح</label><textarea id="managerActionDescription" rows="3" placeholder="شرح پاداش، اخطار یا جریمه..."></textarea></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button id="managerActionSave">💾 ثبت و ارسال به پرسنل</button></div>
+  <div id="managerActionMsg" class="notice hidden"></div>
+</div>
+
+<div class="card">
+  <h2>📢 اطلاع‌رسانی به پرسنل</h2>
+  <div class="admin-toolbar">
+    <div><label>گیرنده</label><select id="managerNoticeTarget"></select></div>
+  </div>
+  <div style="margin-top:12px"><label>متن اطلاعیه</label><textarea id="managerNoticeText" rows="3" placeholder="متن اطلاعیه را برای پرسنل وارد کنید..."></textarea></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button id="managerNoticeSave">📤 ثبت و ارسال اطلاعیه</button></div>
+  <div id="managerNoticeMsg" class="notice hidden"></div>
+  <div style="margin-top:14px"><h3 style="margin:0 0 8px">📜 سوابق اطلاع‌رسانی</h3><div id="managerNoticeHistory"></div></div>
+</div>
+
+<div class="card">
+  <h2>📂 سوابق پاداش، اخطار و جریمه به تفکیک پرسنل</h2>
+  <div id="managerActionHistory"></div>
+</div>
+
 </div>
 
 <div id="adminPage" class="container hidden">
@@ -226,13 +263,38 @@ th{background:#f7f9fc}
     <div id="adminMsg" class="notice hidden"></div>
   </div>
 
+  <div class="card">
+    <div class="header">
+      <div><h2 style="margin-bottom:6px">👥 مدیریت پرسنل حضور و غیاب</h2><div class="muted">افزودن یا حذف پرسنل و تعیین رمز ورود به سیستم حضور و غیاب.</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end;margin-top:12px">
+      <div><label>نام و نام خانوادگی</label><input id="newEmployeeName" type="text" placeholder="مثلاً علی رضایی"></div>
+      <div><label>رمز ورود</label><input id="newEmployeePassword" type="text" inputmode="numeric" maxlength="8" placeholder="مثلاً 1046"></div>
+      <button type="button" id="addEmployeeBtn">➕ افزودن پرسنل</button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr auto;gap:10px;align-items:end;margin-top:10px">
+      <div><label>انتخاب پرسنل برای حذف</label><select id="removeEmployeeSelect"><option value="">یک پرسنل را انتخاب کنید</option></select></div>
+      <button type="button" id="removeEmployeeBtn" class="danger" style="margin:0">🗑 حذف پرسنل</button>
+    </div>
+    <div id="employeeManagementList" class="table-wrap" style="margin-top:14px"></div>
+  </div>
 
 </div>
 
+
+
 <script>
-const employees = [["صابر غزنویان", "1001"], ["حبیب اله امیری", "1002"], ["علی باقری", "1003"], ["ابوالفضل ستارزاده", "1004"], ["سجاد پرویزی", "1005"], ["امین عسگری", "1006"], ["مرتضی دینی", "1007"], ["سعید یورتی", "1008"], ["یوسف دست اورنج", "1009"], ["سجاد لیریایی", "1010"], ["حیدر نامدار", "1011"], ["محمد قاسم پور", "1012"], ["مهدی شکرانی", "1013"], ["خانم طریقت", "1014"], ["خانم اقتصادی", "1015"], ["خانم رضوی", "1016"], ["خانم عبدالصمدی", "1017"], ["خانم سخاوتمند", "1018"], ["خانم پوردرویش", "1019"], ["خانم گنج خانلو", "1020"], ["میلاد هدواند", "1021"], ["خشایار محمد پور", "1022"], ["حسین خطیبی", "1023"], ["حمید زارعی", "1024"], ["مهدی عبادی", "1025"], ["مسعود گودرزی", "1026"], ["مهدی سلمانی", "1027"], ["محمد دیناروند", "1028"], ["امیر ملا", "1029"], ["محمد نوری", "1030"], ["سعید آبار", "1031"], ["نقدعلی", "1032"], ["رضا دیناروند", "1033"], ["سجاد رضایی", "1034"], ["مجید دوستی", "1035"], ["میلاد هندویی", "1036"], ["مهران لطفی", "1037"], ["احمدرضا معینی", "1038"], ["محمد بایرامی", "1039"], ["مهدی سالاروند", "1040"], ["عیسی عبیشی زاده", "1041"], ["اسلام جمالی", "1042"], ["خالد نعیمی", "1043"], ["سجاد مبرهن", "1044"], ["سینا کریمی", "1045"]];
+let employees = [["صابر غزنویان", "1001"], ["حبیب اله امیری", "1002"], ["علی باقری", "1003"], ["ابوالفضل ستارزاده", "1004"], ["سجاد پرویزی", "1005"], ["امین عسگری", "1006"], ["مرتضی دینی", "1007"], ["سعید یورتی", "1008"], ["یوسف دست اورنج", "1009"], ["سجاد لیریایی", "1010"], ["حیدر نامدار", "1011"], ["محمد قاسم پور", "1012"], ["مهدی شکرانی", "1013"], ["خانم طریقت", "1014"], ["خانم اقتصادی", "1015"], ["خانم رضوی", "1016"], ["خانم عبدالصمدی", "1017"], ["خانم سخاوتمند", "1018"], ["خانم پوردرویش", "1019"], ["خانم گنج خانلو", "1020"], ["میلاد هدواند", "1021"], ["خشایار محمد پور", "1022"], ["حسین خطیبی", "1023"], ["حمید زارعی", "1024"], ["مهدی عبادی", "1025"], ["مسعود گودرزی", "1026"], ["مهدی سلمانی", "1027"], ["محمد دیناروند", "1028"], ["امیر ملا", "1029"], ["محمد نوری", "1030"], ["سعید آبار", "1031"], ["نقدعلی", "1032"], ["رضا دیناروند", "1033"], ["سجاد رضایی", "1034"], ["مجید دوستی", "1035"], ["میلاد هندویی", "1036"], ["مهران لطفی", "1037"], ["احمدرضا معینی", "1038"], ["محمد بایرامی", "1039"], ["مهدی سالاروند", "1040"], ["عیسی عبیشی زاده", "1041"], ["اسلام جمالی", "1042"], ["خالد نعیمی", "1043"], ["سجاد مبرهن", "1044"], ["سینا کریمی", "1045"]];
 const ADMIN_PASSWORD = "9999";
 const MANAGER_PASSWORD = "8888";
+const EMPLOYEE_ONLINE_FORM_NUMBER = "__ATTENDANCE_EMPLOYEES__";
+const EMPLOYEE_ONLINE_FORM_DATE = "2099-12-29";
+let employeesOnlineLoaded = false;
+let employeesOnlineLoading = null;
+const COMMITTEE_STORAGE_KEY = "attendance_committee_v1";
+const COMMITTEE_NOTICE_KEY = "attendance_committee_notices_v1";
+const COMMITTEE_ONLINE_RECORD_FORM="__ATTENDANCE_COMMITTEE_RECORDS__";
+const COMMITTEE_ONLINE_NOTICE_FORM="__ATTENDANCE_COMMITTEE_NOTICES__";
 
 // کاربر جاری؛ در iframe با data: URL ممکن است sessionStorage قابل دسترسی نباشد.
 let attendanceUser = null;
@@ -259,6 +321,8 @@ let attendanceSupabaseClient=null;
 let attendanceOnlineLoaded=false;
 let attendanceOnlineLoading=null;
 let memoryRecords={};
+let committeeRecordsMemory=[];
+let committeeNoticesMemory=[];
 
 function loadAttendanceSupabase(){
   if(attendanceSupabaseClient) return Promise.resolve(attendanceSupabaseClient);
@@ -323,18 +387,72 @@ async function loadAttendanceOnline(){
 }
 async function saveAttendanceOnline(records){
   const client=await loadAttendanceSupabase();
+  // هنگام ذخیره حضور و غیاب، داده‌های کمیته فنی را نگه می‌داریم تا
+  // ذخیره حضور و غیاب باعث پاک شدن سوابق کمیته نشود.
+  const {data:current,error:readError}=await client.from("ccm_forms").select("data")
+    .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER)
+    .eq("form_date",ATTENDANCE_ONLINE_FORM_DATE)
+    .maybeSingle();
+  if(readError) throw readError;
+  const old=current?.data||{};
+  const merged={
+    ...old,
+    module:"attendance_records",
+    records:records,
+    ...(Array.isArray(old.committeeRecords)?{committeeRecords:old.committeeRecords}:{}),
+    ...(Array.isArray(old.committeeNotices)?{committeeNotices:old.committeeNotices}:{})
+  };
   const {error}=await client.from("ccm_forms").upsert({
     form_number:ATTENDANCE_ONLINE_FORM_NUMBER,
     form_date:ATTENDANCE_ONLINE_FORM_DATE,
-    data:{module:"attendance_records",records:records},
+    data:merged,
     updated_at:new Date().toISOString()
   },{onConflict:"form_number,form_date"});
   if(error) throw error;
 }
-function setRecords(data){
+async function setRecords(data){
   memoryRecords=data||{};
   try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){}
-  saveAttendanceOnline(memoryRecords).catch(e=>console.error("Attendance online save error:",e));
+  await saveAttendanceOnline(memoryRecords);
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(memoryRecords)); }catch(e){}
+  return memoryRecords;
+}
+async function loadEmployeesOnline(){
+  if(employeesOnlineLoaded) return employees;
+  if(employeesOnlineLoading) return employeesOnlineLoading;
+  employeesOnlineLoading=(async()=>{
+    try{
+      const client=await loadAttendanceSupabase();
+      const {data,error}=await client.from("ccm_forms").select("data")
+        .eq("form_number",EMPLOYEE_ONLINE_FORM_NUMBER)
+        .eq("form_date",EMPLOYEE_ONLINE_FORM_DATE).maybeSingle();
+      if(error) throw error;
+      const list=Array.isArray(data?.data?.employees)?data.data.employees:[];
+      if(list.length) employees=list.filter(e=>Array.isArray(e)&&e.length>=2).map(e=>[String(e[0]),String(e[1])]);
+      else await saveEmployeesOnline(employees);
+      try{localStorage.setItem("attendance_employees_v1",JSON.stringify(employees));}catch(e){}
+      employeesOnlineLoaded=true;
+    }catch(e){
+      try{
+        const local=JSON.parse(localStorage.getItem("attendance_employees_v1")||"null");
+        if(Array.isArray(local)&&local.length) employees=local;
+      }catch(x){}
+      employeesOnlineLoaded=true;
+    }finally{employeesOnlineLoading=null;}
+    return employees;
+  })();
+  return employeesOnlineLoading;
+}
+async function saveEmployeesOnline(list){
+  const client=await loadAttendanceSupabase();
+  const {data:current,error:readError}=await client.from("ccm_forms").select("data")
+    .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER).eq("form_date",ATTENDANCE_ONLINE_FORM_DATE).maybeSingle();
+  if(readError) throw readError;
+  const mergedData={...(current?.data||{}),module:(current?.data?.module)||"attendance_records",employees:list};
+  const {error}=await client.from("ccm_forms").upsert({form_number:EMPLOYEE_ONLINE_FORM_NUMBER,form_date:EMPLOYEE_ONLINE_FORM_DATE,data:{employees:list},updated_at:new Date().toISOString()},{onConflict:"form_number,form_date"});
+  if(error) throw error;
+  try{localStorage.setItem("attendance_employees_v1",JSON.stringify(list));}catch(e){}
+  return true;
 }
 function getEmployeeByPassword(p){return employees.find(x=>x[1]===p)}
 function pad(n){return String(n).padStart(2,"0")}
@@ -410,14 +528,16 @@ async function login(){
   const p=document.getElementById("password").value.trim();
   try{ await loadAttendanceOnline(); }catch(e){ console.error("Attendance online login load error:",e); }
   if(p===MANAGER_PASSWORD){
-    hide("loginPage");hide("adminPage");show("managerPage");initManager();return;
+    hide("loginPage");hide("adminPage");hide("managerPage");show("managerPage");initManager();return;
   }
   if(p===ADMIN_PASSWORD){
     hide("loginPage");show("adminPage");initAdmin();return;
   }
+  await loadEmployeesOnline();
   const emp=getEmployeeByPassword(p);
   if(!emp){msg("loginMsg","رمز عبور اشتباه است.");return}
   setAttendanceUser(emp[0]);
+  try{ await loadCommitteeOnline(); }catch(e){ console.error("Committee load error:",e); }
   hide("loginPage");show("employeePage");loadEmployee(emp[0]);
 }
 
@@ -432,7 +552,167 @@ function loadEmployee(name){
   const today=jalaliToday();
   document.getElementById("todayText").textContent="امروز: "+displayDate(today);
   renderEmployee(name);
+  renderEmployeeCommittee(name);
 }
+function getCommitteeRecords(){
+  return Array.isArray(committeeRecordsMemory) ? committeeRecordsMemory : [];
+}
+function setCommitteeRecords(v){
+  committeeRecordsMemory=Array.isArray(v)?v:[];
+  try{localStorage.setItem(COMMITTEE_STORAGE_KEY,JSON.stringify(committeeRecordsMemory));}catch(e){}
+  return true;
+}
+function getCommitteeNotices(){
+  return Array.isArray(committeeNoticesMemory) ? committeeNoticesMemory : [];
+}
+function setCommitteeNotices(v){
+  committeeNoticesMemory=Array.isArray(v)?v:[];
+  try{localStorage.setItem(COMMITTEE_NOTICE_KEY,JSON.stringify(committeeNoticesMemory));}catch(e){}
+  return true;
+}
+async function loadCommitteeOnline(){
+  try{
+    const client=await loadAttendanceSupabase();
+    // کمیته فنی عمداً از همان رکورد آنلاین اصلی حضور و غیاب استفاده می‌کند
+    // تا داده‌ای که مسئول/کمیته ثبت می‌کند دقیقاً از همان منبعی خوانده شود
+    // که پنل شخصی پرسنل استفاده می‌کند.
+    const {data:main,error:mainError}=await client.from("ccm_forms")
+      .select("data")
+      .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER)
+      .eq("form_date",ATTENDANCE_ONLINE_FORM_DATE)
+      .maybeSingle();
+    if(mainError) throw mainError;
+    const mainData=main?.data||{};
+    let records=Array.isArray(mainData.committeeRecords)?mainData.committeeRecords:null;
+    let notices=Array.isArray(mainData.committeeNotices)?mainData.committeeNotices:null;
+
+    // سازگاری با نسخه‌های قبلی: اگر داده هنوز در رکوردهای جداگانه باشد، آن را
+    // یک‌بار می‌خوانیم و بعد در رکورد اصلی ادغام می‌کنیم.
+    if(!records){
+      const {data:d,error:e}=await client.from("ccm_forms").select("data")
+        .eq("form_number",COMMITTEE_ONLINE_RECORD_FORM).eq("form_date",ATTENDANCE_ONLINE_FORM_DATE).maybeSingle();
+      if(e) console.warn("Old committee records load:",e);
+      records=Array.isArray(d?.data?.records)?d.data.records:[];
+    }
+    if(!notices){
+      const {data:d,error:e}=await client.from("ccm_forms").select("data")
+        .eq("form_number",COMMITTEE_ONLINE_NOTICE_FORM).eq("form_date",ATTENDANCE_ONLINE_FORM_DATE).maybeSingle();
+      if(e) console.warn("Old committee notices load:",e);
+      notices=Array.isArray(d?.data?.notices)?d.data.notices:[];
+    }
+    committeeRecordsMemory=records;
+    committeeNoticesMemory=notices;
+    try{
+      localStorage.setItem(COMMITTEE_STORAGE_KEY,JSON.stringify(records));
+      localStorage.setItem(COMMITTEE_NOTICE_KEY,JSON.stringify(notices));
+    }catch(e){}
+
+    // اگر از نسخه قدیمی داده‌ای پیدا شد، در منبع اصلی هم قرارش می‌دهیم.
+    if(!Array.isArray(mainData.committeeRecords) || !Array.isArray(mainData.committeeNotices)){
+      await saveCommitteeOnline(records,notices);
+    }
+    return {records,notices};
+  }catch(e){
+    console.error("Committee online load error:",e);
+    try{
+      committeeRecordsMemory=JSON.parse(localStorage.getItem(COMMITTEE_STORAGE_KEY)||"[]")||[];
+      committeeNoticesMemory=JSON.parse(localStorage.getItem(COMMITTEE_NOTICE_KEY)||"[]")||[];
+    }catch(x){committeeRecordsMemory=[];committeeNoticesMemory=[];}
+    return {records:committeeRecordsMemory,notices:committeeNoticesMemory};
+  }
+}
+async function saveCommitteeOnline(records,notices){
+  const client=await loadAttendanceSupabase();
+  const {data:current,error:readError}=await client.from("ccm_forms").select("data")
+    .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER)
+    .eq("form_date",ATTENDANCE_ONLINE_FORM_DATE)
+    .maybeSingle();
+  if(readError) throw readError;
+  const currentData=current?.data||{};
+  const mergedData={
+    ...currentData,
+    module:currentData.module||"attendance_records",
+    records:(currentData.records && typeof currentData.records==="object" && !Array.isArray(currentData.records))?currentData.records:memoryRecords,
+    committeeRecords:Array.isArray(records)?records:[],
+    committeeNotices:Array.isArray(notices)?notices:[]
+  };
+  const {error}=await client.from("ccm_forms").upsert({
+    form_number:ATTENDANCE_ONLINE_FORM_NUMBER,
+    form_date:ATTENDANCE_ONLINE_FORM_DATE,
+    data:mergedData,
+    updated_at:new Date().toISOString()
+  },{onConflict:"form_number,form_date"});
+  if(error) throw error;
+  committeeRecordsMemory=mergedData.committeeRecords;
+  committeeNoticesMemory=mergedData.committeeNotices;
+  try{
+    localStorage.setItem(COMMITTEE_STORAGE_KEY,JSON.stringify(committeeRecordsMemory));
+    localStorage.setItem(COMMITTEE_NOTICE_KEY,JSON.stringify(committeeNoticesMemory));
+  }catch(e){}
+  return mergedData;
+}
+function committeeTypeText(t){return {reward:"🏆 پاداش",warning:"🟡 تذکر",notice:"🟠 اخطار",fine:"🔴 جریمه"}[t]||t}
+function formatRial(v){return Number(v||0).toLocaleString("fa-IR")+" ریال"}
+function renderEmployeeCommittee(name){
+  const records=getCommitteeRecords().filter(r=>r.person===name).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  const notices=getCommitteeNotices().filter(n=>n.target==="all"||n.target===name).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  const nb=document.getElementById("myCommitteeNotices"), hb=document.getElementById("myCommitteeHistory");
+  if(!nb||!hb)return;
+  nb.innerHTML=notices.length?notices.map(n=>`<div class="notice" style="margin:8px 0"><b>📢 ${escapeHtml(n.createdAtDisplay||n.createdAt)}</b><br>${escapeHtml(n.text)}</div>`).join(""):"<div class=\"muted\">اطلاعیه‌ای برای شما ثبت نشده است.</div>";
+  hb.innerHTML=records.length?`<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>شرح</th><th>مبلغ</th></tr></thead><tbody>${records.map(r=>`<tr><td>${escapeHtml(r.createdAtDisplay||r.createdAt)}</td><td>${committeeTypeText(r.type)}</td><td>${escapeHtml(r.description)}</td><td>${(r.type==="fine"||r.type==="reward")&&Number(r.amount)>0?formatRial(r.amount):"-"}</td></tr>`).join("")}</tbody></table></div>`:"<div class=\"muted\">سابقه‌ای از کمیته فنی برای شما ثبت نشده است.</div>";
+}
+async function initCommittee(){
+  const sel=document.getElementById("committeePerson"), target=document.getElementById("committeeNoticeTarget");
+  if(!sel||!target)return;
+  sel.innerHTML=employees.map(e=>`<option value="${escapeHtml(e[0])}">${escapeHtml(e[0])}</option>`).join("");
+  target.innerHTML=`<option value="all">📢 همه پرسنل</option>`+employees.map(e=>`<option value="${escapeHtml(e[0])}">${escapeHtml(e[0])}</option>`).join("");
+  await loadCommitteeOnline();
+  renderCommitteeRecords();
+  renderCommitteeNoticeHistory();
+  updateCommitteeAmountLabel();
+}
+function renderCommitteeRecords(){
+  const box=document.getElementById("committeeRecords"), records=getCommitteeRecords();
+  if(!box)return;
+  if(!records.length){box.innerHTML='<div class="muted">هنوز سابقه‌ای ثبت نشده است.</div>';return}
+  const grouped={}; records.forEach(r=>(grouped[r.person]??=[]).push(r));
+  box.innerHTML=Object.entries(grouped).map(([person,arr])=>`<details style="margin:8px 0"><summary style="cursor:pointer;font-weight:700">👤 ${escapeHtml(person)} <span class="badge">${arr.length} مورد</span></summary><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>شرح</th><th>مبلغ</th><th>عملیات</th></tr></thead><tbody>${arr.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(r=>`<tr><td>${escapeHtml(r.createdAtDisplay)}</td><td>${committeeTypeText(r.type)}</td><td>${escapeHtml(r.description)}</td><td>${(r.type==="fine"||r.type==="reward")&&Number(r.amount)>0?formatRial(r.amount):"-"}</td></tr>`).join("")}</tbody></table></div></details>`).join("");
+}
+function renderCommitteeNoticeHistory(){
+  const box=document.getElementById("committeeNoticeHistory"), notices=getCommitteeNotices().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  if(!box)return;
+  if(!notices.length){box.innerHTML='<div class="muted">هنوز اطلاعیه‌ای ارسال نشده است.</div>';return}
+  box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>گیرنده</th><th>متن اطلاعیه</th><th>عملیات</th></tr></thead><tbody>${notices.map(n=>`<tr><td>${escapeHtml(n.createdAtDisplay||n.createdAt)}</td><td>${n.target==="all"?"📢 همه پرسنل":"👤 "+escapeHtml(n.target)}</td><td style="text-align:right;white-space:pre-wrap">${escapeHtml(n.text)}</td><td><button type="button" class="danger" style="padding:6px 10px;width:auto" onclick="deleteManagerNotice(${Number(n.id)})">🗑 حذف</button></td></tr>`).join("")}</tbody></table></div>`;
+}
+function updateCommitteeAmountLabel(){
+  const type=document.getElementById("committeeType")?.value, label=document.getElementById("committeeAmountLabel"), input=document.getElementById("committeeFineAmount");
+  if(!label||!input)return;
+  const money=type==="reward"||type==="fine";
+  label.textContent=type==="reward"?"مبلغ پاداش (ریال)":type==="fine"?"مبلغ جریمه (ریال)":"مبلغ (ریال)";
+  input.placeholder=type==="reward"?"مبلغ پاداش به ریال":type==="fine"?"مبلغ جریمه به ریال":"برای این مورد مبلغ لازم نیست";
+  input.disabled=!money; if(!money)input.value="";
+}
+async function committeeSaveRecord(){
+  const person=document.getElementById("committeePerson")?.value||"", type=document.getElementById("committeeType")?.value||"", amount=Number(document.getElementById("committeeFineAmount")?.value||0), description=document.getElementById("committeeDescription")?.value.trim()||"";
+  if(!person||!description){msg("committeeMsg","پرسنل و شرح را کامل کنید.");return}
+  if((type==="fine"||type==="reward")&&amount<=0){msg("committeeMsg",type==="reward"?"مبلغ پاداش را به ریال وارد کنید.":"مبلغ جریمه را به ریال وارد کنید.");return}
+  const now=new Date(), records=[...getCommitteeRecords()];
+  records.push({id:Date.now(),person,type,amount:(type==="fine"||type==="reward")?amount:0,description,createdAt:now.toISOString(),createdAtDisplay:now.toLocaleString("fa-IR")});
+  try{ await saveCommitteeOnline(records,getCommitteeNotices()); }catch(e){ console.error(e); msg("committeeMsg","ذخیره آنلاین انجام نشد؛ اطلاعات ثبت نشد. اتصال سامانه را بررسی کنید."); return; }
+  document.getElementById("committeeDescription").value=""; document.getElementById("committeeFineAmount").value="";
+  renderCommitteeRecords(); msg("committeeMsg","با موفقیت ثبت و ذخیره شد و در پنل شخصی پرسنل نمایش داده می‌شود.");
+}
+async function committeeSendNotice(){
+  const target=document.getElementById("committeeNoticeTarget")?.value||"", textv=document.getElementById("committeeNoticeText")?.value.trim()||"";
+  if(!textv){msg("committeeNoticeMsg","متن اطلاعیه را وارد کنید.");return}
+  const now=new Date(), ns=[...getCommitteeNotices()];
+  ns.push({id:Date.now(),target,text:textv,createdAt:now.toISOString(),createdAtDisplay:now.toLocaleString("fa-IR")});
+  try{ await saveCommitteeOnline(getCommitteeRecords(),ns); }catch(e){ console.error(e); msg("committeeNoticeMsg","ارسال آنلاین انجام نشد؛ اطلاعیه ثبت نشد. اتصال سامانه را بررسی کنید."); return; }
+  document.getElementById("committeeNoticeText").value=""; renderCommitteeNoticeHistory();
+  msg("committeeNoticeMsg",target==="all"?"اطلاعیه برای همه پرسنل ثبت و ارسال شد.":"اطلاعیه برای پرسنل انتخاب‌شده ثبت و ارسال شد.");
+}
+function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
 function renderEmployee(name){
   const records=getRecords();
   const mine=Object.values(records).filter(r=>r.person===name).sort((a,b)=>b.date.localeCompare(a.date));
@@ -456,7 +736,7 @@ function renderEmployee(name){
   historyBox.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(key=>{
     const [jy,jm]=key.split("/");
     const first=Object.keys(groups).sort((a,b)=>b.localeCompare(a))[0]===key;
-    return `<details class="month-section" ${first?"open":""}>
+    return `<details class="month-section">
       <summary>📅 ${months[Number(jm)]} ${jy}</summary>
       <div class="month-content">
         <div class="table-wrap">
@@ -472,6 +752,112 @@ function renderEmployee(name){
   }).join("");
 }
 
+function initManagerNotice(){
+  const target=document.getElementById("managerNoticeTarget");
+  if(!target)return;
+  target.innerHTML=`<option value="all">📢 همه پرسنل</option>`+employees.map(e=>`<option value="${escapeHtml(e[0])}">${escapeHtml(e[0])}</option>`).join("");
+  const btn=document.getElementById("managerNoticeSave");
+  if(btn) btn.addEventListener("click",saveManagerNotice);
+  loadCommitteeOnline().then(renderManagerNoticeHistory).catch(e=>console.error("Manager notice load error:",e));
+}
+async function saveManagerNotice(){
+  const target=document.getElementById("managerNoticeTarget")?.value||"all";
+  const textv=document.getElementById("managerNoticeText")?.value.trim()||"";
+  if(!textv){msg("managerNoticeMsg","متن اطلاعیه را وارد کنید.");return;}
+  const now=new Date();
+  const notices=[...getCommitteeNotices(),{id:Date.now(),target,text:textv,createdAt:now.toISOString(),createdAtDisplay:now.toLocaleString("fa-IR")}];
+  try{
+    await saveCommitteeOnline(getCommitteeRecords(),notices);
+    document.getElementById("managerNoticeText").value="";
+    renderManagerNoticeHistory();
+    msg("managerNoticeMsg",target==="all"?"اطلاعیه برای همه پرسنل ثبت و ارسال شد.":"اطلاعیه برای پرسنل انتخاب‌شده ثبت و ارسال شد.");
+  }catch(e){
+    console.error("Manager notice save error:",e);
+    msg("managerNoticeMsg","ذخیره آنلاین انجام نشد؛ اطلاعیه ثبت نشد. اتصال سامانه را بررسی کنید.");
+  }
+}
+function renderManagerNoticeHistory(){
+  const box=document.getElementById("managerNoticeHistory");
+  if(!box)return;
+  const notices=[...getCommitteeNotices()].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+  if(!notices.length){box.innerHTML='<div class="muted">هنوز اطلاعیه‌ای ارسال نشده است.</div>';return;}
+  box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>گیرنده</th><th>متن اطلاعیه</th></tr></thead><tbody>${notices.map(n=>`<tr><td>${escapeHtml(n.createdAtDisplay||n.createdAt)}</td><td>${n.target==="all"?"📢 همه پرسنل":"👤 "+escapeHtml(n.target)}</td><td style="text-align:right;white-space:pre-wrap">${escapeHtml(n.text)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+async function deleteManagerNotice(id){
+  if(!confirm("آیا از حذف این اطلاعیه مطمئن هستید؟")) return;
+  const updated=getCommitteeNotices().filter(n=>String(n.id)!==String(id));
+  try{
+    await saveCommitteeOnline(getCommitteeRecords(),updated);
+    renderManagerNoticeHistory();
+    msg("managerNoticeMsg","اطلاعیه با موفقیت حذف شد.");
+  }catch(e){
+    console.error("Manager notice delete error:",e);
+    msg("managerNoticeMsg","حذف اطلاعیه انجام نشد؛ اتصال سامانه را بررسی کنید.");
+  }
+}
+
+function initManagerActions(){
+  const sel=document.getElementById("managerActionPerson");
+  if(!sel)return;
+  sel.innerHTML=employees.map(e=>`<option value="${escapeHtml(e[0])}">${escapeHtml(e[0])}</option>`).join("");
+  const type=document.getElementById("managerActionType");
+  if(type){type.addEventListener("change",updateManagerActionAmount);}
+  const btn=document.getElementById("managerActionSave");
+  if(btn){btn.addEventListener("click",saveManagerAction);}
+  updateManagerActionAmount();
+  renderManagerActions();
+}
+function updateManagerActionAmount(){
+  const type=document.getElementById("managerActionType")?.value;
+  const label=document.getElementById("managerActionAmountLabel"), input=document.getElementById("managerActionAmount");
+  if(!label||!input)return;
+  const money=type==="reward"||type==="fine";
+  label.textContent=type==="reward"?"مبلغ پاداش (ریال)":"مبلغ جریمه (ریال)";
+  input.placeholder=type==="reward"?"مبلغ پاداش به ریال":"مبلغ جریمه به ریال";
+  input.disabled=!money; if(!money)input.value="";
+}
+async function saveManagerAction(){
+  const person=document.getElementById("managerActionPerson")?.value||"";
+  const type=document.getElementById("managerActionType")?.value||"";
+  const amount=Number(document.getElementById("managerActionAmount")?.value||0);
+  const description=document.getElementById("managerActionDescription")?.value.trim()||"";
+  if(!person||!description){msg("managerActionMsg","پرسنل و شرح را کامل کنید.");return;}
+  if((type==="reward"||type==="fine")&&amount<=0){msg("managerActionMsg",type==="reward"?"مبلغ پاداش را به ریال وارد کنید.":"مبلغ جریمه را به ریال وارد کنید.");return;}
+  const now=new Date();
+  const records=[...getCommitteeRecords(),{id:Date.now(),person,type,amount:(type==="reward"||type==="fine")?amount:0,description,createdAt:now.toISOString(),createdAtDisplay:now.toLocaleString("fa-IR")}];
+  try{
+    await saveCommitteeOnline(records,getCommitteeNotices());
+    document.getElementById("managerActionDescription").value="";
+    document.getElementById("managerActionAmount").value="";
+    renderManagerActions();
+    msg("managerActionMsg","با موفقیت ثبت شد و در پنل شخصی پرسنل انتخاب‌شده نمایش داده می‌شود.");
+  }catch(e){
+    console.error("Manager action save error:",e);
+    msg("managerActionMsg","ذخیره آنلاین انجام نشد؛ اطلاعات ثبت نشد.");
+  }
+}
+function renderManagerActions(){
+  const box=document.getElementById("managerActionHistory"); if(!box)return;
+  const records=getCommitteeRecords();
+  if(!records.length){box.innerHTML='<div class="muted">هنوز سابقه‌ای ثبت نشده است.</div>';return;}
+  const grouped={}; records.forEach(r=>(grouped[r.person]??=[]).push(r));
+  box.innerHTML=Object.entries(grouped).map(([person,arr])=>`<details style="margin:8px 0"><summary style="cursor:pointer;font-weight:700">👤 ${escapeHtml(person)} <span class="badge">${arr.length} مورد</span></summary><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>شرح</th><th>مبلغ</th></tr></thead><tbody>${arr.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(r=>`<tr><td>${escapeHtml(r.createdAtDisplay||r.createdAt)}</td><td>${committeeTypeText(r.type)}</td><td>${escapeHtml(r.description)}</td><td>${(r.type==="fine"||r.type==="reward")&&Number(r.amount)>0?formatRial(r.amount):"-"}</td><td><button type="button" class="danger" style="padding:6px 10px;width:auto" onclick="deleteManagerAction(${Number(r.id)})">🗑 حذف</button></td></tr>`).join("")}</tbody></table></div></details>`).join("");
+}
+
+async function deleteManagerAction(id){
+  if(!confirm("آیا از حذف این مورد مطمئن هستید؟")) return;
+  const updated=getCommitteeRecords().filter(r=>String(r.id)!==String(id));
+  try{
+    await saveCommitteeOnline(updated,getCommitteeNotices());
+    renderManagerActions();
+    msg("managerActionMsg","مورد انتخاب‌شده با موفقیت حذف شد.");
+  }catch(e){
+    console.error("Manager action delete error:",e);
+    msg("managerActionMsg","حذف مورد انجام نشد؛ اتصال سامانه را بررسی کنید.");
+  }
+}
+
 function initManager(){
   const opts=employees.map(e=>`<option value="${e[0]}">${e[0]}</option>`).join("");
   document.getElementById("managerPerson").innerHTML=opts;
@@ -483,6 +869,9 @@ function initManager(){
   document.getElementById("managerTime").value=pad(new Date().getHours())+":"+pad(new Date().getMinutes());
   setupTimeInput("managerTime", saveManagerAttendance);
   renderManager();
+  initManagerActions();
+  initManagerNotice();
+  loadCommitteeOnline().then(()=>{ renderManagerActions(); renderManagerNoticeHistory(); }).catch(e=>console.error("Manager records load error:",e));
 }
 
 // ذخیره خودکار پنل مسئول: پس از ورود ساعت معتبر، ثبت/ویرایش به‌صورت خودکار انجام می‌شود.
@@ -501,7 +890,7 @@ function setupTimeInput(id, saveFn=saveAttendance){
   });
 }
 
-function saveManagerAttendance(){
+async function saveManagerAttendance(){
   const person=document.getElementById("managerPerson").value;
   const date=inputDateToGregorian(document.getElementById("managerDate").value);
   const type=document.getElementById("managerType").value;
@@ -509,8 +898,15 @@ function saveManagerAttendance(){
   if(!person||!date||!time){msg("managerMsg","پرسنل، تاریخ و ساعت را کامل کنید.");return}
   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)){msg("managerMsg","ساعت را به صورت ۲۴ ساعته وارد کنید؛ مثال 08:30");return}
   const records=getRecords(); const key=person+"|"+date;
-  records[key]=records[key]||{person,date,in:"",out:""}; records[key][type]=time; setRecords(records);
-  msg("managerMsg","اطلاعات با موفقیت ثبت/ویرایش شد."); renderManager();
+  records[key]=records[key]||{person,date,in:"",out:""}; records[key][type]=time;
+  try{
+    await setRecords(records);
+    msg("managerMsg","اطلاعات با موفقیت در سامانه آنلاین ذخیره شد.");
+    renderManager();
+  }catch(e){
+    console.error("Attendance manager online save error:",e);
+    msg("managerMsg","خطا در ذخیره آنلاین اطلاعات؛ ساعت ذخیره نشد. اتصال اینترنت و دسترسی سامانه را بررسی کنید.");
+  }
 }
 
 function renderManager(){
@@ -532,20 +928,30 @@ function renderManager(){
     (groups[key] ||= []).push(r);
   });
   const keys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
-  box.innerHTML=keys.map((key,index)=>{
+  box.innerHTML=keys.map((key)=>{
     const [jy,jm]=key.split("/");
-    return `<details class="month-section" ${index===0?"open":""}>
+    const dayGroups={};
+    groups[key].forEach(r=>{
+      const dp=displayDate(r.date).split("/");
+      const dayKey=dp[2] || "00";
+      (dayGroups[dayKey] ||= []).push(r);
+    });
+    const dayKeys=Object.keys(dayGroups).sort((a,b)=>b.localeCompare(a));
+    return `<details class="month-section">
       <summary>📅 ${months[Number(jm)]} ${jy} <span class="small">${groups[key].length} رکورد</span></summary>
-      <div class="month-content">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>پرسنل</th><th>تاریخ</th><th>روز</th><th>ورود</th><th>خروج</th><th>عملیات</th></tr></thead>
-            <tbody>${groups[key].map(r=>{
-              const recordKey=encodeURIComponent(r.person+"|"+r.date);
-              return `<tr><td>${r.person}</td><td>${displayDate(r.date)}</td><td>${dayName(r.date)}</td><td class="status-in">${r.in||"-"}</td><td class="status-out">${r.out||"-"}</td><td><button class="danger" style="width:auto;padding:7px 12px" onclick="deleteManagerRecord(decodeURIComponent('${recordKey}'))">حذف</button></td></tr>`;
-            }).join("")}</tbody>
-          </table>
-        </div>
+      <div class="month-content" style="padding:10px 12px">
+        ${dayKeys.map(dayKey=>`<details class="day-section" style="margin:8px 0;border:1px solid #e5ebf2;border-radius:12px;overflow:hidden">
+          <summary style="list-style:none;cursor:pointer;padding:11px 13px;background:#fafcff;font-weight:bold;display:flex;align-items:center;justify-content:space-between">🗓️ ${jy}/${jm}/${dayKey} — ${dayName(dayGroups[dayKey][0].date)} <span class="small">${dayGroups[dayKey].length} رکورد</span></summary>
+          <div class="table-wrap" style="padding:8px">
+            <table>
+              <thead><tr><th>پرسنل</th><th>تاریخ</th><th>روز</th><th>ورود</th><th>خروج</th><th>عملیات</th></tr></thead>
+              <tbody>${dayGroups[dayKey].map(r=>{
+                const recordKey=encodeURIComponent(r.person+"|"+r.date);
+                return `<tr><td>${r.person}</td><td>${displayDate(r.date)}</td><td>${dayName(r.date)}</td><td class="status-in">${r.in||"-"}</td><td class="status-out">${r.out||"-"}</td><td><button class="danger" style="width:auto;padding:7px 12px" onclick="deleteManagerRecord(decodeURIComponent('${recordKey}'))">حذف</button></td></tr>`;
+              }).join("")}</tbody>
+            </table>
+          </div>
+        </details>`).join("")}
       </div>
     </details>`;
   }).join("");
@@ -555,7 +961,46 @@ function deleteManagerRecord(key){
   const records=getRecords(); delete records[key]; setRecords(records); renderManager();
 }
 
-function initAdmin(){
+function renderEmployeeManagement(){
+  const box=document.getElementById("employeeManagementList");
+  const sel=document.getElementById("removeEmployeeSelect");
+  if(sel){
+    const current=sel.value;
+    sel.innerHTML=`<option value="">یک پرسنل را انتخاب کنید</option>`+employees.map((e,i)=>`<option value="${i}">${escapeHtml(e[0])}</option>`).join("");
+    if(current!=="" && employees[Number(current)]) sel.value=current;
+  }
+  if(!box)return;
+  box.innerHTML=employees.length?`<details class="employee-list-collapse" style="margin-top:14px"><summary style="cursor:pointer;font-weight:700;padding:10px 12px;border-radius:10px;background:var(--soft,#f5f7fa);list-style-position:inside">👥 لیست پرسنل <span class="badge">${employees.length} نفر</span></summary><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>ردیف</th><th>نام و نام خانوادگی</th><th>رمز ورود</th><th>عملیات</th></tr></thead><tbody>${employees.map((e,i)=>`<tr><td>${i+1}</td><td style="font-weight:bold">${escapeHtml(e[0])}</td><td>${escapeHtml(e[1])}</td><td><button type="button" class="danger" style="width:auto;padding:7px 12px" onclick="removeEmployee(${i})">🗑 حذف</button></td></tr>`).join("")}</tbody></table></div></details>`:`<div class="empty">پرسنی ثبت نشده است.</div>`;
+}
+async function removeSelectedEmployee(){
+  const sel=document.getElementById("removeEmployeeSelect");
+  const index=sel?.value;
+  if(index===undefined || index===null || index===""){ msg("adminMsg","ابتدا یک پرسنل را برای حذف انتخاب کنید."); return; }
+  await removeEmployee(Number(index));
+}
+async function addEmployee(){
+  const name=document.getElementById("newEmployeeName")?.value.trim()||"";
+  const password=document.getElementById("newEmployeePassword")?.value.trim()||"";
+  if(!name){msg("adminMsg","نام پرسنل را وارد کنید.");return;}
+  if(!/^\d{4,8}$/.test(password)){msg("adminMsg","رمز ورود باید ۴ تا ۸ رقم باشد.");return;}
+  if(employees.some(e=>e[0]===name)){msg("adminMsg","این نام قبلاً ثبت شده است.");return;}
+  if(employees.some(e=>e[1]===password)||password===ADMIN_PASSWORD||password===MANAGER_PASSWORD){msg("adminMsg","این رمز قبلاً استفاده شده یا رزرو سیستم است.");return;}
+  employees.push([name,password]);
+  try{await saveEmployeesOnline(employees);msg("adminMsg",`پرسنل «${name}» با موفقیت اضافه شد.`);}catch(e){employees.pop();msg("adminMsg","ذخیره آنلاین انجام نشد؛ دوباره تلاش کنید.");return;}
+  document.getElementById("newEmployeeName").value="";document.getElementById("newEmployeePassword").value="";
+  initAdmin();
+}
+async function removeEmployee(index){
+  const emp=employees[index]; if(!emp)return;
+  if(!confirm(`پرسنل «${emp[0]}» از لیست ورود حذف شود؟ سوابق قبلی حضور و غیاب حذف نخواهد شد.`))return;
+  const old=employees.slice(); employees.splice(index,1);
+  try{await saveEmployeesOnline(employees);msg("adminMsg",`پرسنل «${emp[0]}» حذف شد و سوابق قبلی حفظ شد.`);}catch(e){employees=old;msg("adminMsg","حذف آنلاین انجام نشد؛ تغییرات برگردانده شد.");return;}
+  initAdmin();
+}
+async function initAdmin(){
+  // ابتدا لیست محلی/پیش‌فرض را فوراً نمایش بده تا منوی انتخاب خالی نماند.
+  renderEmployeeManagement();
+  await loadEmployeesOnline();
   const fp=document.getElementById("filterPerson");
   const opts=employees.map(e=>`<option value="${e[0]}">${e[0]}</option>`).join("");
   fp.innerHTML=`<option value="">همه پرسنل</option>`+opts;
@@ -566,6 +1011,7 @@ function initAdmin(){
   document.getElementById("currentJalaliDate").textContent=displayDate(today);
   renderDailyAttendance();
   renderAll();
+  renderEmployeeManagement();
 }
 
 function renderDailyAttendance(){
@@ -662,6 +1108,8 @@ document.getElementById("loginBtn").onclick=login;
 document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 document.getElementById("logoutBtn").onclick=logout;
 document.getElementById("adminLogoutBtn").onclick=logout;
+document.getElementById("addEmployeeBtn").onclick=addEmployee;
+document.getElementById("removeEmployeeBtn").onclick=removeSelectedEmployee;
 document.getElementById("managerLogoutBtn").onclick=logout;
 document.getElementById("managerSave").onclick=saveManagerAttendance;
 document.getElementById("managerShow").onclick=renderManager;
@@ -712,6 +1160,19 @@ function downloadExcelHtml(filename, htmlContent){
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
+
+(function bindCommitteeButtons(){
+  const save=document.getElementById("committeeSaveBtn");
+  const type=document.getElementById("committeeType");
+  const send=document.getElementById("committeeSendNoticeBtn");
+  const clog=document.getElementById("committeeLogoutBtn");
+  const elog=document.getElementById("logoutBtn");
+  if(save) save.onclick=committeeSaveRecord;
+  if(type) type.onchange=updateCommitteeAmountLabel;
+  if(send) send.onclick=committeeSendNotice;
+  if(clog) clog.onclick=logout;
+  if(elog) elog.onclick=logout;
+})();
 
 function exportManagementExcel(){
     if(typeof isManagement === "function" && !isManagement()){

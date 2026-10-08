@@ -18,7 +18,7 @@ html,body{
     padding:0;
     width:100%;
     min-height:100%;
-    font-family: sans-serif,Arial,sans-serif;
+    font-family: b nazanin,b nazanin,b nazanin;
     background:#f2f4f7;
     color:#222;
 }
@@ -179,7 +179,17 @@ button:active{
 }
 
 /* TECHNICAL MANAGER REQUEST PANEL */
-.technical-request-panel{background:#fff;border:1px solid #dfe4e9;border-radius:14px;padding:12px;box-shadow:0 3px 12px rgba(0,0,0,.06);margin-bottom:12px;}
+.technical-request-panel{background:#fff;border:1px solid #dfe4e9;border-radius:14px;padding:12px;box-shadow:0 3px 12px rgba(0,0,0,.06);margin-bottom:12px;}.technical-blue-panel{background:linear-gradient(135deg,rgba(13,110,253,.96),rgba(37,99,235,.88));color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(13,110,253,.24);margin-bottom:12px;}
+.technical-blue-panel .technical-request-note,.technical-blue-panel .hse-section-note{color:rgba(255,255,255,.88)}
+.request-month-group{margin:10px 0;border:1px solid rgba(255,255,255,.25);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.08)}
+.request-month-group>summary{cursor:pointer;padding:12px 14px;font-weight:800;list-style:none;background:rgba(255,255,255,.10)}
+.request-month-group>summary::-webkit-details-marker{display:none}
+.request-day-group{margin:8px;border:1px solid rgba(255,255,255,.18);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.08)}
+.request-day-group>summary{cursor:pointer;padding:10px 12px;font-weight:700;list-style:none;background:rgba(255,255,255,.08)}
+.request-day-group>summary::-webkit-details-marker{display:none}
+.request-group-content{padding:0 8px 8px}
+.technical-blue-panel .technical-request-item,.technical-blue-panel .hse-request-card{background:rgba(255,255,255,.96);color:#1f2937}
+
 .technical-request-title{font-weight:bold;font-size:16px;margin-bottom:5px;color:#173b68;}
 .technical-request-note{font-size:12px;color:#667085;margin-bottom:10px;}
 .technical-new-request-toggle{display:flex;justify-content:space-between;align-items:center;background:#f5f8fb;border:1px solid #dfe4e9;border-radius:11px;padding:12px;cursor:pointer;font-weight:bold;color:#173b68;}
@@ -191,14 +201,14 @@ button:active{
 .technical-request-row{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;cursor:pointer;background:#f8fafc;}
 .technical-request-row-right{display:flex;align-items:center;gap:10px;font-size:18px;}
 .technical-request-static{padding:10px 12px;}
-.technical-request-text-small{font-size:12px;line-height:1.9;color:#344054;white-space:pre-wrap;background:#f8fafc;border-radius:9px;padding:9px;}
+.technical-request-text-small{font-family:inherit;font-size:12px;line-height:1.9;color:#344054;white-space:pre-wrap;background:#f8fafc;border-radius:9px;padding:9px;}
 .technical-request-meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:7px;}
 .technical-request-delete-wrap{display:flex;justify-content:flex-start;margin-top:8px;}
 .technical-request-delete-btn{border:1px solid #f1b8b8;background:#fff5f5;color:#b42318;border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;cursor:pointer;}
 .technical-request-date{display:block;font-size:11px;color:#7b8794;margin-top:3px;font-weight:normal;}
 .technical-request-body{display:none;padding:10px;border-top:1px solid #e8edf2;}
 .technical-request-body.open{display:block;}
-.technical-request-text{background:#f8fafc;border-radius:9px;padding:10px;line-height:1.8;white-space:pre-wrap;}
+.technical-request-text{font-family:inherit;background:#f8fafc;border-radius:9px;padding:10px;line-height:1.8;white-space:pre-wrap;}
 .technical-response{margin-top:8px;background:#f1f8f3;border-radius:9px;padding:9px;line-height:1.7;font-size:13px;}
 .technical-empty{text-align:center;color:#7b8794;font-size:13px;padding:18px 8px;}
 
@@ -662,6 +672,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .checklist-table .item-explanation{width:100%;min-width:170px;min-height:42px;box-sizing:border-box;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;line-height:1.7;resize:vertical;background:#fff;color:#172033;}
 .checklist-table .item-explanation:focus{outline:2px solid rgba(49,90,134,.2);border-color:#315a86;}
 @media(max-width:640px){.checklist-table .item-explanation{min-width:145px;font-size:12px}.checklist-table th,.checklist-table td{padding:7px 6px;}}
+
+.form-month-group,.form-day-group{border:1px solid #dfe5ec;border-radius:12px;background:#fff;margin:8px 0;overflow:hidden;}
+.form-month-group>summary,.form-day-group>summary{list-style:none;cursor:pointer;padding:11px 13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+.form-month-group>summary::-webkit-details-marker,.form-day-group>summary::-webkit-details-marker{display:none;}
+.form-month-group>summary:after,.form-day-group>summary:after{content:"⌄";font-size:18px;transition:transform .2s;}
+.form-month-group[open]>summary:after,.form-day-group[open]>summary:after{transform:rotate(180deg);}
+.form-month-body{padding:0 8px 8px;background:#fafcff;}
+.form-day-group{margin:7px 0;background:#fff;}
+.form-day-group>summary{font-size:14px;background:#f7f9fc;}
+.form-day-list{padding:5px;}
+.form-day-list .search-item{margin:6px 0;}
 </style>
 </head>
 
@@ -870,9 +891,11 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
    ACCESS CONTROL
 ========================================================= */
 
+const SECTION_ID = "production";
+
 const accessUsers = {
     "3333": { role:"production-engineer", title:"مهندس شیفت" },
-    "0200": { role:"manager", title:"مدیر" }
+    "0200": { role:"manager", title:"مدیر واحد تولید", section:"production" }
 };
 
 let currentAccess = null;
@@ -883,7 +906,8 @@ function isManagement(){
 
 function canSeeRole(roleId){
     if(!currentAccess) return false;
-    if(currentAccess.role === "safety-officer" || currentAccess.role === "manager") return true;
+    if(currentAccess.role === "manager") return currentAccess.section === SECTION_ID;
+    if(currentAccess.role === "safety-officer") return true;
     return currentAccess.role === roleId;
 }
 
@@ -1344,57 +1368,93 @@ function deleteSafetyRequest(id){
     renderRoles();
 }
 
+function normalizeJalaliDigits(value){
+    return String(value||"")
+        .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+        .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))) ;
+}
+function getRequestFormDate(r){
+    const raw=normalizeJalaliDigits(r.formDate||r.dateKey||"").trim();
+    const m=raw.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if(m) return `${m[1]}/${String(m[2]).padStart(2,"0")}/${String(m[3]).padStart(2,"0")}`;
+    return "";
+}
+function requestMonthKey(r){
+    const raw=getRequestFormDate(r);
+    const m=raw.match(/(\d{4})[\/\-](\d{1,2})/);
+    if(m) return `${m[1]}/${String(m[2]).padStart(2,"0")}`;
+    return "بدون تاریخ";
+}
+function requestDayKey(r){
+    const raw=getRequestFormDate(r);
+    if(raw) return raw;
+    return "بدون تاریخ";
+}
+function requestMonthTitle(key){
+    const parts=String(key).split("/");
+    const months=["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+    return parts.length===2 && /^\d{4}$/.test(parts[0]) ? `📅 ${months[Number(parts[1])]||parts[1]} ${parts[0]}` : `📅 ${key}`;
+}
+function requestDayTitle(key){ return `🗓 ${key}`; }
+function groupedRequestsHtml(requests, renderer, outerClass=""){
+    if(!requests.length) return "";
+    const months={};
+    requests.forEach(r=>(months[requestMonthKey(r)]??=[]).push(r));
+    const monthKeys=Object.keys(months).sort((a,b)=>b.localeCompare(a));
+    return monthKeys.map((mk,mi)=>{
+        const days={};
+        months[mk].forEach(r=>(days[requestDayKey(r)]??=[]).push(r));
+        const dayKeys=Object.keys(days).sort((a,b)=>b.localeCompare(a));
+        return `<details class="request-month-group ${outerClass}" ><summary>${requestMonthTitle(mk)} <span class="badge">${months[mk].length} درخواست</span></summary><div class="request-group-content">${dayKeys.map((dk,di)=>`<details class="request-day-group" ><summary>${requestDayTitle(dk)} <span class="badge">${days[dk].length}</span></summary><div class="request-group-content">${days[dk].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(renderer).join("")}</div></details>`).join("")}</div></details>`;
+    }).join("");
+}
+function createTechnicalRequestItem(r,i){
+    const st=safetyStatusText(r.status), cls=safetyStatusClass(r.status);
+    return `<div class="technical-request-item"><div class="technical-request-static">
+        <div class="technical-request-text-small">${escapeHtml(r.text)}</div>
+        ${r.tools?`<div class="technical-response"><b>تجهیزات و ابزار مورد نیاز:</b><br>${escapeHtml(r.tools)}</div>`:""}
+        ${r.technicians?`<div class="technical-response"><b>نفرات فنی به‌کارگیری‌شده:</b><br>${escapeHtml(r.technicians)}</div>`:""}
+        <div class="technical-request-meta-row"><span class="technical-request-date">${escapeHtml(getRequestFormDate(r)||r.createdAt||"")}</span><span class="hse-request-status ${cls}">${st}</span></div>
+        ${r.response?`<div class="technical-response"><b>توضیحات مسئول ایمنی:</b><br>${escapeHtml(r.response)}</div>`:""}
+        <div class="technical-request-delete-wrap"><button type="button" class="technical-request-delete-btn" onclick="deleteSafetyRequest(${r.id})">🗑 حذف</button></div>
+    </div></div>`;
+}
 function createTechnicalRequestPanel(){
     const requests=getSafetyRequests();
-    const today=new Date().toLocaleDateString("fa-IR");
-    let html=`<div class="technical-request-panel">
-        <div class="technical-request-note">هر درخواست را جداگانه ثبت کنید. درخواست‌های ثبت‌شده در همان روز باقی می‌مانند.</div>
-        <div class="technical-new-request-toggle" onclick="toggleTechnicalNewRequest()">
-            <span>➕ درخواست جدید</span><span id="technicalNewRequestPlus">+</span>
-        </div>
+    return `<div class="technical-blue-panel">
+        <div class="technical-request-note"><b>🛠 درخواست‌های مسئول فنی</b><br>درخواست‌ها به تفکیک ماه و سپس روز، به‌صورت کشویی نگهداری می‌شوند.</div>
+        <div class="technical-new-request-toggle" onclick="toggleTechnicalNewRequest()"><span>➕ درخواست جدید</span><span id="technicalNewRequestPlus">+</span></div>
         <div id="technicalNewRequestBox" class="technical-new-request-box">
-            <label>توضیحات / درخواست</label>
-            <textarea id="safetyRequestText" class="hse-request-textarea" placeholder="درخواست خود را بنویسید..."></textarea>
+            <label>توضیحات / درخواست</label><textarea id="safetyRequestText" class="hse-request-textarea" placeholder="درخواست خود را بنویسید..."></textarea>
+            <label>تجهیزات و ابزار مورد نیاز</label><textarea id="safetyRequestTools" class="hse-request-textarea technical-compact-box" placeholder="تجهیزات، ابزار و اقلام موردنیاز را وارد کنید..."></textarea>
+            <label>نفرات فنی به کار گیری شده</label><textarea id="safetyRequestTechnicians" class="hse-request-textarea technical-compact-box" placeholder="نام نفرات فنی به‌کارگیری‌شده را وارد کنید..."></textarea>
             <div class="hse-request-actions"><button type="button" class="hse-request-btn hse-send-btn" onclick="saveSafetyRequest(); setTimeout(()=>{const b=document.getElementById('technicalNewRequestBox'); if(b)b.classList.remove('open'); const p=document.getElementById('technicalNewRequestPlus'); if(p)p.textContent='+';},80)">📤 ثبت درخواست</button></div>
-        </div>`;
-    if(!requests.length){
-        html+=`<div class="technical-empty">هنوز درخواستی برای امروز ثبت نشده است.</div>`;
-    }else{
-        html+=`<div class="technical-request-list">`;
-        requests.forEach((r)=>{
-            const st=safetyStatusText(r.status);
-            const cls=safetyStatusClass(r.status);
-            html+=`<div class="technical-request-item">
-                <div class="technical-request-static">
-                    <div class="technical-request-text-small">${escapeHtml(r.text)}</div>
-                    <div class="technical-request-meta-row"><span class="technical-request-date">${escapeHtml(r.createdAt||today)}</span><span class="hse-request-status ${cls}">${st}</span></div>
-                    ${r.response?`<div class="technical-response"><b>توضیحات مسئول ایمنی:</b><br>${escapeHtml(r.response)}</div>`:""}
-                    <div class="technical-request-delete-wrap"><button type="button" class="technical-request-delete-btn" onclick="deleteSafetyRequest(${r.id})">🗑 حذف</button></div>
-                </div>
-            </div>`;
-        });
-        html+=`</div>`;
-    }
-    html+=`</div>`;
-    return html;
+        </div>
+        ${requests.length?`<div class="technical-request-list">${groupedRequestsHtml(requests,(r)=>createTechnicalRequestItem(r))}</div>`:`<div class="technical-empty">هنوز درخواستی ثبت نشده است.</div>`}
+    </div>`;
 }
-
+function createSafetyRequestItem(r,i){
+    const st=safetyStatusText(r.status), cls=safetyStatusClass(r.status);
+    return `<div class="hse-request-card" id="safety-request-${r.id}"><div class="hse-request-head"><div class="hse-request-title">درخواست</div><div class="hse-request-status ${cls}">${st}</div></div><div class="hse-request-meta">تاریخ فرم: ${escapeHtml(getRequestFormDate(r)||r.createdAt||"")}</div><label class="hse-response-label">درخواست مسئول فنی</label><div class="hse-request-view">${escapeHtml(r.text)}</div>${r.tools?`<label class="hse-response-label">تجهیزات و ابزار مورد نیاز</label><div class="hse-request-view">${escapeHtml(r.tools)}</div>`:""}${r.technicians?`<label class="hse-response-label">نفرات فنی به‌کارگیری‌شده</label><div class="hse-request-view">${escapeHtml(r.technicians)}</div>`:""}<div class="hse-approval-actions"><button type="button" class="hse-request-btn hse-approve-btn" onclick="setSafetyRequestStatus(${r.id},'approved')">✓ تأیید</button><button type="button" class="hse-request-btn hse-reject-btn" onclick="setSafetyRequestStatus(${r.id},'rejected')">✕ عدم تأیید</button></div><label class="hse-response-label">توضیحات مسئول ایمنی</label><textarea id="safetyResponse-${r.id}" class="hse-request-textarea" placeholder="توضیحات یا علت تأیید/عدم تأیید را بنویسید...">${escapeHtml(r.response||"")}</textarea><div class="hse-request-actions"><button type="button" class="hse-request-btn hse-response-btn" onclick="saveSafetyResponse(${r.id})">💾 ثبت توضیحات</button></div></div>`;
+}
 function createSafetyPermitPanel(){
     const isSafety=currentAccess && currentAccess.role==="safety-officer";
     const requests=getSafetyRequests();
-    const today=new Date().toLocaleDateString("fa-IR");
     if(isSafety){
         if(!requests.length) return `<div class="hse-request-card"><div class="hse-request-title">درخواست‌های مسئول فنی</div><div class="hse-section-note">هنوز درخواستی ثبت نشده است.</div></div>`;
-        return `<div class="hse-section-note">درخواست‌های مسئول فنی؛ هر درخواست را جداگانه بررسی کنید.</div>`+requests.map((r,i)=>`<div class="hse-request-card" id="safety-request-${r.id}"><div class="hse-request-head"><div class="hse-request-title">درخواست شماره ${i+1}</div><div class="hse-request-status ${safetyStatusClass(r.status)}">${safetyStatusText(r.status)}</div></div><div class="hse-request-meta">تاریخ ثبت: ${escapeHtml(r.createdAt||today)}</div><label class="hse-response-label">درخواست مسئول فنی</label><div class="hse-request-view">${escapeHtml(r.text)}</div><div class="hse-approval-actions"><button type="button" class="hse-request-btn hse-approve-btn" onclick="setSafetyRequestStatus(${r.id},'approved')">✓ تأیید</button><button type="button" class="hse-request-btn hse-reject-btn" onclick="setSafetyRequestStatus(${r.id},'rejected')">✕ عدم تأیید</button></div><label class="hse-response-label">توضیحات مسئول ایمنی</label><textarea id="safetyResponse-${r.id}" class="hse-request-textarea" placeholder="توضیحات یا علت تأیید/عدم تأیید را بنویسید...">${escapeHtml(r.response||"")}</textarea><div class="hse-request-actions"><button type="button" class="hse-request-btn hse-response-btn" onclick="saveSafetyResponse(${r.id})">💾 ثبت توضیحات</button></div></div>`).join("");
+        return `<div class="technical-blue-panel"><div class="hse-section-note"><b>📥 درخواست‌های مسئول فنی</b><br>درخواست‌ها به تفکیک ماه و سپس روز، به‌صورت کشویی نمایش داده می‌شوند.</div>${groupedRequestsHtml(requests,(r,i)=>createSafetyRequestItem(r,i))}</div>`;
     }
-    return `<div class="hse-request-card"><div class="hse-request-head"><div class="hse-request-title">📝 ثبت درخواست</div><div class="hse-request-status pending">● درخواست جدید</div></div><label class="hse-response-label">درخواست خود را بنویسید</label><textarea id="safetyRequestText" class="hse-request-textarea" placeholder="درخواست و توضیحات موردنیاز را بنویسید..."></textarea><div class="hse-request-actions"><button type="button" class="hse-request-btn hse-send-btn" onclick="saveSafetyRequest()">📤 ثبت درخواست</button></div></div>${requests.length?`<div class="hse-section-note">درخواست‌های ثبت‌شده</div>`:""}${requests.map((r,i)=>`<div class="hse-request-card"><div class="hse-request-head"><div class="hse-request-title">درخواست شماره ${i+1}</div><div class="hse-request-status ${safetyStatusClass(r.status)}">${safetyStatusText(r.status)}</div></div><div class="hse-request-meta">تاریخ ثبت: ${escapeHtml(r.createdAt||today)}</div><div class="hse-request-view">${escapeHtml(r.text)}</div>${r.response?`<div class="hse-hse-response"><b>پاسخ مسئول ایمنی:</b><br>${escapeHtml(r.response)}</div>`:""}</div>`).join("")}`;
+    return `<div class="hse-request-card"><div class="hse-request-head"><div class="hse-request-title">📝 ثبت درخواست</div><div class="hse-request-status pending">● درخواست جدید</div></div><label class="hse-response-label">درخواست خود را بنویسید</label><textarea id="safetyRequestText" class="hse-request-textarea" placeholder="درخواست و توضیحات موردنیاز را بنویسید..."></textarea><div class="hse-request-actions"><button type="button" class="hse-request-btn hse-send-btn" onclick="saveSafetyRequest()">📤 ثبت درخواست</button></div></div>${requests.length?`<div class="technical-blue-panel"><div class="hse-section-note"><b>📂 سوابق درخواست‌ها</b></div>${groupedRequestsHtml(requests,(r,i)=>`<div class="hse-request-card"><div class="hse-request-head"><div class="hse-request-title">درخواست</div><div class="hse-request-status ${safetyStatusClass(r.status)}">${safetyStatusText(r.status)}</div></div><div class="hse-request-meta">تاریخ فرم: ${escapeHtml(getRequestFormDate(r)||r.createdAt||"")}</div><div class="hse-request-view">${escapeHtml(r.text)}</div>${r.response?`<div class="hse-hse-response"><b>پاسخ مسئول ایمنی:</b><br>${escapeHtml(r.response)}</div>`:""}</div>`)}</div>`:""}`;
 }
 function escapeHtml(value){ return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function saveSafetyRequest(){
     const el=document.getElementById("safetyRequestText"), text=el?el.value.trim():"";
     if(!text){showMessage("لطفاً متن درخواست را وارد کنید");return;}
     const now=new Date(), requests=getSafetyRequests();
-    const request={id:Date.now(),text:text,status:"pending",response:"",createdAt:now.toLocaleString("fa-IR"),dateKey:now.toLocaleDateString("fa-IR")};
+    const formDateEl=document.getElementById("formDate");
+    const formDate=normalizeJalaliDigits(formDateEl?formDateEl.value.trim():"");
+    const requestDate=/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(formDate)?formDate:getTodayJalali();
+    const request={id:Date.now(),text:text,status:"pending",response:"",createdAt:now.toLocaleString("fa-IR"),formDate:requestDate,dateKey:requestDate};
     requests.push(request);
     saveSafetyRequests(requests);
     if(el) el.value="";
@@ -2353,183 +2413,56 @@ function toggleSearch(){
    LOAD ALL FORMS
 ========================================================= */
 
+const _monthsFa=["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 async function loadAllForms(){
-
-    if(!currentAccess || !isManagement()){
-        return;
-    }
-
-    const results =
-        document.getElementById(
-            "searchResults"
-        );
-
-    results.innerHTML =
-        "در حال دریافت فرم‌ها...";
-
-
+    if(!currentAccess || !isManagement()) return;
+    const results=document.getElementById("searchResults");
+    results.innerHTML="در حال دریافت فرم‌ها...";
     try{
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("ccm_forms")
-                .select(
-                    "id,form_number,form_date,updated_at"
-                )
-                .order(
-                    "form_number",
-                    {
-                        ascending:true
-                    }
-                );
-
-
-        if(error){
-
-            console.error(error);
-
-            results.innerHTML =
-                "خطا در دریافت فرم‌ها";
-
-            return;
-
-        }
-
-
-        if(
-            !data ||
-            data.length === 0
-        ){
-
-            results.innerHTML =
-                "هنوز فرمی ذخیره نشده است.";
-
-            return;
-
-        }
-
-
-        results.innerHTML = "";
-
-
-        data.forEach(item => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-            div.className =
-                "search-item";
-
-
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-            info.className =
-                "search-info";
-
-
-            let updated = "";
-
-            if(item.updated_at){
-
-                try{
-
-                    updated =
-                        new Date(
-                            item.updated_at
-                        ).toLocaleString(
-                            "fa-IR"
-                        );
-
-                }catch(e){
-
-                    updated =
-                        item.updated_at;
-
-                }
-
-            }
-
-
-            info.innerHTML =
-                `
-                <strong>
-                    فرم شماره ${item.form_number}
-                </strong>
-                <br>
-                تاریخ: ${item.form_date}
-                <br>
-                آخرین ویرایش:
-                ${updated}
-                `;
-
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.className =
-                "search-load";
-
-            button.textContent =
-                "باز کردن";
-
-
-            button.onclick =
-                function(){
-
-                    document.getElementById(
-                        "formNumber"
-                    ).value =
-                        item.form_number;
-
-                    document.getElementById(
-                        "formDate"
-                    ).value =
-                        item.form_date;
-
-                    loadForm(
-                        item.form_number,
-                        item.form_date
-                    );
-
-                    document
-                        .getElementById(
-                            "searchPanel"
-                        )
-                        .classList.remove(
-                            "open"
-                        );
-
-                };
-
-
-            div.appendChild(info);
-
-            div.appendChild(button);
-
-            results.appendChild(div);
-
+        let {data,error}=await supabaseClient.from("ccm_forms").select("id,form_number,form_date,updated_at").order("form_date",{ascending:false}).order("form_number",{ascending:false});
+        if(error){ console.error(error); results.innerHTML="خطا در دریافت فرم‌ها"; return; }
+        // رکوردهای داخلی سامانه (از جمله تاریخ‌های ۲۰۹۹) نباید در جستجوی فرم‌ها نمایش داده شوند.
+        data = (data || []).filter(item => {
+            const date = String(item.form_date || "");
+            const number = String(item.form_number || "");
+            return !date.startsWith("2099-") && !number.startsWith("__");
         });
-
-
-    }catch(error){
-
-        console.error(error);
-
-        results.innerHTML =
-            "خطا در ارتباط با پایگاه داده.";
-
-    }
-
+        if(!data.length){ results.innerHTML="هنوز فرم ثبت‌شده‌ای وجود ندارد."; return; }
+        const groups={};
+        data.forEach(item=>{
+            const parts=String(item.form_date||"").replaceAll("-","/").split("/");
+            const y=parts[0]||"-", m=String(Number(parts[1]||0)).padStart(2,"0"), d=String(Number(parts[2]||0)).padStart(2,"0");
+            const monthKey=`${y}/${m}`, dayKey=`${monthKey}/${d}`;
+            (groups[monthKey] ||= {}); (groups[monthKey][dayKey] ||= []).push(item);
+        });
+        results.innerHTML="";
+        Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach((monthKey,mi)=>{
+            const [jy,jm]=monthKey.split("/");
+            const monthDetails=document.createElement("details"); monthDetails.className="form-month-group"; 
+            const monthSummary=document.createElement("summary");
+            monthSummary.innerHTML=`📅 ${_monthsFa[Number(jm)]||`ماه ${jm}`} ${jy} <span class="small">${Object.values(groups[monthKey]).flat().length} فرم</span>`;
+            monthDetails.appendChild(monthSummary);
+            const monthBody=document.createElement("div"); monthBody.className="form-month-body";
+            Object.keys(groups[monthKey]).sort((a,b)=>b.localeCompare(a)).forEach((dayKey,di)=>{
+                const dayItems=groups[monthKey][dayKey], day=dayKey.split("/")[2];
+                const dayDetails=document.createElement("details"); dayDetails.className="form-day-group"; 
+                const daySummary=document.createElement("summary"); daySummary.innerHTML=`🗓️ روز ${day} <span class="small">${dayItems.length} فرم</span>`;
+                dayDetails.appendChild(daySummary);
+                const list=document.createElement("div"); list.className="form-day-list";
+                dayItems.forEach(item=>{
+                    const div=document.createElement("div"); div.className="search-item";
+                    const info=document.createElement("div"); info.className="search-info";
+                    let updated=""; if(item.updated_at){try{updated=new Date(item.updated_at).toLocaleString("fa-IR");}catch(e){updated=item.updated_at;}}
+                    info.innerHTML=`<strong>فرم شماره ${escapeHtml(item.form_number)}</strong><br>تاریخ: ${escapeHtml(item.form_date)}<br>آخرین ویرایش: ${escapeHtml(updated||"-")}`;
+                    const button=document.createElement("button"); button.className="search-load"; button.textContent="باز کردن";
+                    button.onclick=()=>{document.getElementById("formNumber").value=item.form_number;document.getElementById("formDate").value=item.form_date;loadForm(item.form_number,item.form_date);document.getElementById("searchPanel").classList.remove("open");};
+                    div.appendChild(info); div.appendChild(button); list.appendChild(div);
+                });
+                dayDetails.appendChild(list); monthBody.appendChild(dayDetails);
+            });
+            monthDetails.appendChild(monthBody); results.appendChild(monthDetails);
+        });
+    }catch(e){ console.error(e); results.innerHTML="خطا در دریافت فرم‌ها"; }
 }
 
 

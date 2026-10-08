@@ -18,7 +18,7 @@ html,body{
     padding:0;
     width:100%;
     min-height:100%;
-    font-family: sans-serif,Arial,sans-serif;
+    font-family: b nazanin,b nazanin,b nazanin;
     background:#f2f4f7;
     color:#222;
 }
@@ -627,6 +627,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 
 
 /* FAST CCM STARTUP: Supabase loads after the login UI is ready. */
+
+.form-month-group,.form-day-group{border:1px solid #dfe5ec;border-radius:12px;background:#fff;margin:8px 0;overflow:hidden;}
+.form-month-group>summary,.form-day-group>summary{list-style:none;cursor:pointer;padding:11px 13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+.form-month-group>summary::-webkit-details-marker,.form-day-group>summary::-webkit-details-marker{display:none;}
+.form-month-group>summary:after,.form-day-group>summary:after{content:"⌄";font-size:18px;transition:transform .2s;}
+.form-month-group[open]>summary:after,.form-day-group[open]>summary:after{transform:rotate(180deg);}
+.form-month-body{padding:0 8px 8px;background:#fafcff;}
+.form-day-group{margin:7px 0;background:#fff;}
+.form-day-group>summary{font-size:14px;background:#f7f9fc;}
+.form-day-list{padding:5px;}
+.form-day-list .search-item{margin:6px 0;}
 </style>
 </head>
 
@@ -833,6 +844,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
    ACCESS CONTROL
 ========================================================= */
 
+const SECTION_ID = "ccm";
+
 const accessUsers = {
     "1111": { role:"sarshakhe", title:"سرشاخه" },
     "2222": { role:"komak-sarshakhe", title:"کمک سرشاخه" },
@@ -840,7 +853,7 @@ const accessUsers = {
     "4444": { role:"boreshkar", title:"برشکار" },
     "5555": { role:"operator", title:"اپراتور" },
     "0100": { role:"supervisor", title:"سرپرست" },
-    "0200": { role:"manager", title:"مدیر" }
+    "0200": { role:"manager", title:"مدیر واحد سی‌سی‌ام", section:"ccm" }
 };
 
 let currentAccess = null;
@@ -851,7 +864,8 @@ function isManagement(){
 
 function canSeeRole(roleId){
     if(!currentAccess) return false;
-    if(currentAccess.role === "supervisor" || currentAccess.role === "manager") return true;
+    if(currentAccess.role === "manager") return currentAccess.section === SECTION_ID;
+    if(currentAccess.role === "supervisor") return true;
     return currentAccess.role === roleId;
 }
 
@@ -2357,183 +2371,56 @@ function toggleSearch(){
    LOAD ALL FORMS
 ========================================================= */
 
+const _monthsFa=["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 async function loadAllForms(){
-
-    if(!currentAccess || !isManagement()){
-        return;
-    }
-
-    const results =
-        document.getElementById(
-            "searchResults"
-        );
-
-    results.innerHTML =
-        "در حال دریافت فرم‌ها...";
-
-
+    if(!currentAccess || !isManagement()) return;
+    const results=document.getElementById("searchResults");
+    results.innerHTML="در حال دریافت فرم‌ها...";
     try{
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("ccm_forms")
-                .select(
-                    "id,form_number,form_date,updated_at"
-                )
-                .order(
-                    "form_number",
-                    {
-                        ascending:true
-                    }
-                );
-
-
-        if(error){
-
-            console.error(error);
-
-            results.innerHTML =
-                "خطا در دریافت فرم‌ها";
-
-            return;
-
-        }
-
-
-        if(
-            !data ||
-            data.length === 0
-        ){
-
-            results.innerHTML =
-                "هنوز فرمی ذخیره نشده است.";
-
-            return;
-
-        }
-
-
-        results.innerHTML = "";
-
-
-        data.forEach(item => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-            div.className =
-                "search-item";
-
-
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-            info.className =
-                "search-info";
-
-
-            let updated = "";
-
-            if(item.updated_at){
-
-                try{
-
-                    updated =
-                        new Date(
-                            item.updated_at
-                        ).toLocaleString(
-                            "fa-IR"
-                        );
-
-                }catch(e){
-
-                    updated =
-                        item.updated_at;
-
-                }
-
-            }
-
-
-            info.innerHTML =
-                `
-                <strong>
-                    فرم شماره ${item.form_number}
-                </strong>
-                <br>
-                تاریخ: ${item.form_date}
-                <br>
-                آخرین ویرایش:
-                ${updated}
-                `;
-
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.className =
-                "search-load";
-
-            button.textContent =
-                "باز کردن";
-
-
-            button.onclick =
-                function(){
-
-                    document.getElementById(
-                        "formNumber"
-                    ).value =
-                        item.form_number;
-
-                    document.getElementById(
-                        "formDate"
-                    ).value =
-                        item.form_date;
-
-                    loadForm(
-                        item.form_number,
-                        item.form_date
-                    );
-
-                    document
-                        .getElementById(
-                            "searchPanel"
-                        )
-                        .classList.remove(
-                            "open"
-                        );
-
-                };
-
-
-            div.appendChild(info);
-
-            div.appendChild(button);
-
-            results.appendChild(div);
-
+        let {data,error}=await supabaseClient.from("ccm_forms").select("id,form_number,form_date,updated_at").order("form_date",{ascending:false}).order("form_number",{ascending:false});
+        if(error){ console.error(error); results.innerHTML="خطا در دریافت فرم‌ها"; return; }
+        // رکوردهای داخلی سامانه (از جمله تاریخ‌های ۲۰۹۹) نباید در جستجوی فرم‌ها نمایش داده شوند.
+        data = (data || []).filter(item => {
+            const date = String(item.form_date || "");
+            const number = String(item.form_number || "");
+            return !date.startsWith("2099-") && !number.startsWith("__");
         });
-
-
-    }catch(error){
-
-        console.error(error);
-
-        results.innerHTML =
-            "خطا در ارتباط با پایگاه داده.";
-
-    }
-
+        if(!data.length){ results.innerHTML="هنوز فرم ثبت‌شده‌ای وجود ندارد."; return; }
+        const groups={};
+        data.forEach(item=>{
+            const parts=String(item.form_date||"").replaceAll("-","/").split("/");
+            const y=parts[0]||"-", m=String(Number(parts[1]||0)).padStart(2,"0"), d=String(Number(parts[2]||0)).padStart(2,"0");
+            const monthKey=`${y}/${m}`, dayKey=`${monthKey}/${d}`;
+            (groups[monthKey] ||= {}); (groups[monthKey][dayKey] ||= []).push(item);
+        });
+        results.innerHTML="";
+        Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach((monthKey,mi)=>{
+            const [jy,jm]=monthKey.split("/");
+            const monthDetails=document.createElement("details"); monthDetails.className="form-month-group"; 
+            const monthSummary=document.createElement("summary");
+            monthSummary.innerHTML=`📅 ${_monthsFa[Number(jm)]||`ماه ${jm}`} ${jy} <span class="small">${Object.values(groups[monthKey]).flat().length} فرم</span>`;
+            monthDetails.appendChild(monthSummary);
+            const monthBody=document.createElement("div"); monthBody.className="form-month-body";
+            Object.keys(groups[monthKey]).sort((a,b)=>b.localeCompare(a)).forEach((dayKey,di)=>{
+                const dayItems=groups[monthKey][dayKey], day=dayKey.split("/")[2];
+                const dayDetails=document.createElement("details"); dayDetails.className="form-day-group"; 
+                const daySummary=document.createElement("summary"); daySummary.innerHTML=`🗓️ روز ${day} <span class="small">${dayItems.length} فرم</span>`;
+                dayDetails.appendChild(daySummary);
+                const list=document.createElement("div"); list.className="form-day-list";
+                dayItems.forEach(item=>{
+                    const div=document.createElement("div"); div.className="search-item";
+                    const info=document.createElement("div"); info.className="search-info";
+                    let updated=""; if(item.updated_at){try{updated=new Date(item.updated_at).toLocaleString("fa-IR");}catch(e){updated=item.updated_at;}}
+                    info.innerHTML=`<strong>فرم شماره ${escapeHtml(item.form_number)}</strong><br>تاریخ: ${escapeHtml(item.form_date)}<br>آخرین ویرایش: ${escapeHtml(updated||"-")}`;
+                    const button=document.createElement("button"); button.className="search-load"; button.textContent="باز کردن";
+                    button.onclick=()=>{document.getElementById("formNumber").value=item.form_number;document.getElementById("formDate").value=item.form_date;loadForm(item.form_number,item.form_date);document.getElementById("searchPanel").classList.remove("open");};
+                    div.appendChild(info); div.appendChild(button); list.appendChild(div);
+                });
+                dayDetails.appendChild(list); monthBody.appendChild(dayDetails);
+            });
+            monthDetails.appendChild(monthBody); results.appendChild(monthDetails);
+        });
+    }catch(e){ console.error(e); results.innerHTML="خطا در دریافت فرم‌ها"; }
 }
 
 
