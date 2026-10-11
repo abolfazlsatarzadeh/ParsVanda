@@ -433,6 +433,7 @@ async function loadEmployeesOnline(){
       try{localStorage.setItem("attendance_employees_v1",JSON.stringify(employees));}catch(e){}
       employeesOnlineLoaded=true;
     }catch(e){
+      console.error("Could not load employee credentials from Supabase:",e);
       try{
         const local=JSON.parse(localStorage.getItem("attendance_employees_v1")||"null");
         if(Array.isArray(local)&&local.length) employees=local;
@@ -445,13 +446,30 @@ async function loadEmployeesOnline(){
 }
 async function saveEmployeesOnline(list){
   const client=await loadAttendanceSupabase();
-  const {data:current,error:readError}=await client.from("ccm_forms").select("data")
-    .eq("form_number",ATTENDANCE_ONLINE_FORM_NUMBER).eq("form_date",ATTENDANCE_ONLINE_FORM_DATE).maybeSingle();
-  if(readError) throw readError;
-  const mergedData={...(current?.data||{}),module:(current?.data?.module)||"attendance_records",employees:list};
-  const {error}=await client.from("ccm_forms").upsert({form_number:EMPLOYEE_ONLINE_FORM_NUMBER,form_date:EMPLOYEE_ONLINE_FORM_DATE,data:{employees:list},updated_at:new Date().toISOString()},{onConflict:"form_number,form_date"});
-  if(error) throw error;
-  try{localStorage.setItem("attendance_employees_v1",JSON.stringify(list));}catch(e){}
+  const safeList=list.map(e=>[String(e[0]),String(e[1])]);
+  // Do not rely on a composite unique constraint for upsert: update the exact
+  // employee-registry row when it exists, otherwise insert it.
+  const {data:current,error:readError}=await client.from("ccm_forms").select("form_number,form_date,data")
+    .eq("form_number",EMPLOYEE_ONLINE_FORM_NUMBER)
+    .eq("form_date",EMPLOYEE_ONLINE_FORM_DATE).maybeSingle();
+  if(readError) throw new Error("خواندن فهرست پرسنل: "+(readError.message||readError.code||"خطای نامشخص"));
+  const payload={...(current?.data||{}),module:"attendance_employees",employees:safeList};
+  let writeResult;
+  if(current){
+    writeResult=await client.from("ccm_forms").update({data:payload,updated_at:new Date().toISOString()})
+      .eq("form_number",EMPLOYEE_ONLINE_FORM_NUMBER).eq("form_date",EMPLOYEE_ONLINE_FORM_DATE);
+  }else{
+    writeResult=await client.from("ccm_forms").insert({form_number:EMPLOYEE_ONLINE_FORM_NUMBER,form_date:EMPLOYEE_ONLINE_FORM_DATE,data:payload,updated_at:new Date().toISOString()});
+  }
+  if(writeResult.error) throw new Error("نوشتن فهرست پرسنل: "+(writeResult.error.message||writeResult.error.code||"خطای نامشخص"));
+  const {data:verify,error:verifyError}=await client.from("ccm_forms").select("data")
+    .eq("form_number",EMPLOYEE_ONLINE_FORM_NUMBER).eq("form_date",EMPLOYEE_ONLINE_FORM_DATE).maybeSingle();
+  if(verifyError) throw new Error("بررسی ذخیره: "+(verifyError.message||verifyError.code||"خطای نامشخص"));
+  const serverList=Array.isArray(verify?.data?.employees)?verify.data.employees:[];
+  const matches=serverList.length===safeList.length && safeList.every((e,i)=>serverList[i] && String(serverList[i][0])===e[0] && String(serverList[i][1])===e[1]);
+  if(!matches) throw new Error("ذخیره انجام شد اما تأیید رمزهای برگشتی از سرور ناموفق بود.");
+  employees=serverList.map(e=>[String(e[0]),String(e[1])]);
+  try{localStorage.setItem("attendance_employees_v1",JSON.stringify(employees));}catch(e){}
   return true;
 }
 function getEmployeeByPassword(p){return employees.find(x=>x[1]===p)}
@@ -1035,26 +1053,30 @@ function renderEmployeeManagement(){
 async function updateEmployeePassword(index){
   const emp=employees[index];
   const input=document.getElementById(`employeePassword-${index}`);
-  if(!emp||!input)return;
-  const password=input.value.trim();
-  if(!/^\\d{4,8}$/.test(password)){
-    msg("adminMsg","رمز ورود باید ۴ تا ۸ رقم باشد.");
+  if(!emp||!input){msg("adminMsg","خطا: ردیف پرسنل یا کادر رمز پیدا نشد.");return;}
+  const password=String(input.value||"").trim();
+  if(!/^\d{4,8}$/.test(password)){
+    msg("adminMsg","رمز ورود باید فقط شامل ۴ تا ۸ رقم باشد.");
     input.focus();return;
   }
-  if(employees.some((e,i)=>i!==index&&e[1]===password)||password===ADMIN_PASSWORD||password===MANAGER_PASSWORD){
-    msg("adminMsg","این رمز قبلاً استفاده شده یا رزرو سیستم است.");
+  if(employees.some((e,i)=>i!==index&&String(e[1])===password)||password===ADMIN_PASSWORD||password===MANAGER_PASSWORD){
+    msg("adminMsg","این رمز قبلاً استفاده شده یا برای مدیریت رزرو است.");
     input.focus();return;
   }
-  const oldPassword=emp[1];
-  if(password===oldPassword){msg("adminMsg","رمز ورود تغییری نکرده است.");return;}
+  const oldPassword=String(emp[1]);
+  if(password===oldPassword){msg("adminMsg","رمز جدید با رمز فعلی تفاوتی ندارد.");return;}
+  const button=input.closest("tr")?.querySelector("button[onclick^='updateEmployeePassword']");
+  if(button){button.disabled=true;button.textContent="⏳ در حال ذخیره...";}
+  msg("adminMsg",`در حال ذخیره رمز جدید برای «${emp[0]}»...`);
   emp[1]=password;
   try{
     await saveEmployeesOnline(employees);
-    msg("adminMsg",`رمز ورود «${emp[0]}» با موفقیت تغییر کرد.`);
+    msg("adminMsg",`✅ رمز ورود «${emp[0]}» با موفقیت در سرور ذخیره و بررسی شد.`);
     renderEmployeeManagement();
   }catch(e){
     emp[1]=oldPassword;
-    msg("adminMsg","ذخیره رمز در سرور انجام نشد؛ اتصال را بررسی و دوباره تلاش کنید.");
+    console.error("updateEmployeePassword failed:",e);
+    msg("adminMsg","❌ ذخیره رمز انجام نشد: "+(e?.message||e?.details||e?.hint||"خطای نامشخص؛ کنسول مرورگر را بررسی کنید."));
     renderEmployeeManagement();
   }
 }
@@ -1072,7 +1094,7 @@ async function addEmployee(){
   if(employees.some(e=>e[0]===name)){msg("adminMsg","این نام قبلاً ثبت شده است.");return;}
   if(employees.some(e=>e[1]===password)||password===ADMIN_PASSWORD||password===MANAGER_PASSWORD){msg("adminMsg","این رمز قبلاً استفاده شده یا رزرو سیستم است.");return;}
   employees.push([name,password]);
-  try{await saveEmployeesOnline(employees);msg("adminMsg",`پرسنل «${name}» با موفقیت اضافه شد.`);}catch(e){employees.pop();msg("adminMsg","ذخیره آنلاین انجام نشد؛ دوباره تلاش کنید.");return;}
+  try{await saveEmployeesOnline(employees);msg("adminMsg",`پرسنل «${name}» با موفقیت اضافه شد.`);}catch(e){employees.pop();msg("adminMsg","ذخیره آنلاین ناموفق بود: "+(e?.message||"خطای نامشخص"));return;}
   document.getElementById("newEmployeeName").value="";document.getElementById("newEmployeePassword").value="";
   initAdmin();
 }
