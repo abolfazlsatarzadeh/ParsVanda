@@ -683,6 +683,10 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .form-day-group>summary{font-size:14px;background:#f7f9fc;}
 .form-day-list{padding:5px;}
 .form-day-list .search-item{margin:6px 0;}
+
+/* Background image fitted to screen */
+#loginPage,.login-screen,#launcher,#infoView{background-size:cover!important;background-position:center center!important;background-repeat:no-repeat!important;}
+@media(max-width:700px){#loginPage,.login-screen,#launcher,#infoView{background-attachment:scroll!important;background-size:cover!important;background-position:center center!important;}}
 </style>
 </head>
 
@@ -893,7 +897,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 
 const SECTION_ID = "production";
 
-const accessUsers = {
+let accessUsers = {
     "3333": { role:"production-engineer", title:"مهندس شیفت" },
     "0200": { role:"manager", title:"مدیر واحد تولید", section:"production" }
 };
@@ -911,7 +915,27 @@ function canSeeRole(roleId){
     return currentAccess.role === roleId;
 }
 
-function login(){
+const SECTION_CODES_FORM_NUMBER="__SECTION_ACCESS_CODES__";
+const SECTION_CODES_FORM_DATE="2099-12-28";
+const DEFAULT_ACCESS_USERS=JSON.parse(JSON.stringify(accessUsers));
+async function loadSharedSectionAccessCodes(){
+  try{
+    const client=await loadSupabase();
+    const {data,error}=await client.from("ccm_forms").select("data").eq("form_number",SECTION_CODES_FORM_NUMBER).eq("form_date",SECTION_CODES_FORM_DATE).maybeSingle();
+    if(error)throw error;
+    const saved=data?.data?.accessCodes?.[SECTION_ID];
+    if(!Array.isArray(saved))return;
+    const updated={};
+    for(const item of saved){
+      if(!item||!item.role||!/^\d{4}$/.test(String(item.code)))continue;
+      const base=Object.values(DEFAULT_ACCESS_USERS).find(x=>x.role===item.role);
+      if(base)updated[String(item.code)]={...base,title:item.title||base.title};
+    }
+    if(Object.keys(updated).length)accessUsers=updated;
+  }catch(e){console.error("Could not load shared section access codes:",e);}
+}
+
+async function login(){
     const input = document.getElementById("accessPassword");
     const error = document.getElementById("loginError");
     const password = input.value.trim();
@@ -922,6 +946,7 @@ function login(){
         return;
     }
 
+    await loadSharedSectionAccessCodes();
     const account = accessUsers[password];
     if(!account){
         error.textContent = "رمز عبور صحیح نیست.";
